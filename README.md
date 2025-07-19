@@ -33,7 +33,7 @@ uvx --from=git+https://github.com/berezovskyi/strictdoc@b-conneg-uris --no-cache
 
 ## Exploring the OSLC services
 
-We will start with a standardized well-known endpoint for OSLC:
+We will start with a [standardized](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) well-known endpoint for OSLC:
 
 ```sh
 curl -X GET 'https://localhost:7000/.well-known/oslc/rootservices.xml'

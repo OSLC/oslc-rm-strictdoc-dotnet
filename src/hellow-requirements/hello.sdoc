@@ -1,0 +1,19 @@
+[DOCUMENT]
+TITLE: StrictDoc
+ROOT: True
+OPTIONS:
+  ENABLE_MID: True
+
+[REQUIREMENT]
+UID: SDOC-HIGH-REQS-MANAGEMENT
+TITLE: Requirements management
+STATEMENT: StrictDoc shall enable requirements management.
+
+[REQUIREMENT]
+UID: SDOC-HIGH-REQS-DECOMP
+TITLE: Requirements decomposition
+STATEMENT: StrictDoc shall support requirement decomposition.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-HIGH-REQS-MANAGEMENT
+

@@ -1,0 +1,88 @@
+## SPDX Document
+SPDXID: SPDXRef-DOCUMENT
+name: Requirements for Untitled Project
+# Creation Information
+  specVersion: 3.0.0
+  created: 2025-07-16T01:52:26Z
+  created using: SPDXRef-StrictDoc
+  profile: SOFTWARE
+  data license: CC0 1.0
+  comment: SPDX 3.0 SBOM for Untitled Project's requirements.
+summary: SPDX Document for project Untitled Project
+elements: 
+
+## Package
+SPDXID: SPDXRef-PACKAGE
+name: Requirements package
+summary: SPDX Package for project Untitled Project
+verified using:
+  algorithm: SHA256
+  hash_value: TBD: What to calculate for a package?
+
+## File
+SPDXID: SPDXRef-File-SDocDocument-StrictDoc
+name: hello.sdoc
+summary: SDPX File for document StrictDoc
+verified using:
+  algorithm: SHA256
+  hash_value: 16b555d038ab3804373d7475eb926b2aa3926ba6bc012f052eaa61a298703e45
+
+## Snippet
+SPDXID: SDOC-HIGH-REQS-MANAGEMENT
+name: Requirement 'Requirements management'
+summary: SPDX Snippet for requirement SDOC-HIGH-REQS-MANAGEMENT
+description: StrictDoc shall enable requirements management.
+comment: This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.
+verified using:
+  algorithm: SHA256
+  hash_value: c14500147118475c1d43069f204a2a48b89a5eadbba8b4134bcaced66991ccd8
+byte_range: PositiveIntegerRange(begin=68, end=203)
+line_range: PositiveIntegerRange(begin=7, end=11)
+
+## Snippet
+SPDXID: SDOC-HIGH-REQS-DECOMP
+name: Requirement 'Requirements decomposition'
+summary: SPDX Snippet for requirement SDOC-HIGH-REQS-DECOMP
+description: StrictDoc shall support requirement decomposition.
+comment: This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.
+verified using:
+  algorithm: SHA256
+  hash_value: 65d426fe80e70c5c5e7c25406d43a0b2a9f70e3455d1d37d942d7697eb27d20c
+byte_range: PositiveIntegerRange(begin=204, end=402)
+line_range: PositiveIntegerRange(begin=12, end=19)
+
+## Relationship
+SPDXID: SPDXRef-Relationship-How-to-form-ID?
+summary: SPDX Document for project Untitled Project --|CONTAINS|--> SPDX Package for project Untitled Project
+from_element: SPDXRef-DOCUMENT
+to: SPDXRef-PACKAGE
+relationship_type: CONTAINS
+
+## Relationship
+SPDXID: SPDXRef-Relationship-How-to-form-ID?
+summary: SPDX Package for project Untitled Project --|CONTAINS|--> SDPX File for document StrictDoc
+from_element: SPDXRef-PACKAGE
+to: SPDXRef-File-SDocDocument-StrictDoc
+relationship_type: CONTAINS
+
+## Relationship
+SPDXID: SPDXRef-Relationship-How-to-form-ID?
+summary: SDPX File for document StrictDoc --|CONTAINS|--> SPDX Snippet for requirement SDOC-HIGH-REQS-MANAGEMENT
+from_element: SPDXRef-File-SDocDocument-StrictDoc
+to: SDOC-HIGH-REQS-MANAGEMENT
+relationship_type: CONTAINS
+
+## Relationship
+SPDXID: SPDXRef-Relationship-How-to-form-ID?
+summary: SDPX File for document StrictDoc --|CONTAINS|--> SPDX Snippet for requirement SDOC-HIGH-REQS-DECOMP
+from_element: SPDXRef-File-SDocDocument-StrictDoc
+to: SDOC-HIGH-REQS-DECOMP
+relationship_type: CONTAINS
+
+## Relationship
+SPDXID: SPDXRef-Relationship-How-to-form-ID?
+summary: SPDX Snippet for requirement SDOC-HIGH-REQS-DECOMP --|REQUIREMENT_FOR|--> SPDX Snippet for requirement SDOC-HIGH-REQS-MANAGEMENT
+from_element: SDOC-HIGH-REQS-DECOMP
+to: SDOC-HIGH-REQS-MANAGEMENT
+relationship_type: REQUIREMENT_FOR
+

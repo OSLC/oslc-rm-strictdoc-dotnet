@@ -1,0 +1,166 @@
+[DOCUMENT]
+TITLE: Requirements for Untitled Project
+OPTIONS:
+  VIEW_STYLE: Inline
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: SPDX_DOCUMENT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: SPDXID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Child
+    ROLE: CONTAINS
+- TAG: SPDX_PACKAGE
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: SPDXID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: PRIMARY_PURPOSE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: False
+  - TITLE: SUMMARY
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Child
+    ROLE: CONTAINS
+- TAG: SPDX_FILE
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: SPDXID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: PRIMARY_PURPOSE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: SUMMARY
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Child
+    ROLE: CONTAINS
+  - TYPE: File
+- TAG: SPDX_SNIPPET
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: SPDXID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: PRIMARY_PURPOSE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: SUMMARY
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
+    ROLE: REQUIREMENT_FOR
+  - TYPE: File
+
+[SPDX_PACKAGE]
+UID: SPDXRef-DOCUMENT
+SPDXID: SPDXRef-DOCUMENT
+TITLE: Requirements for Untitled Project
+STATEMENT: >>>
+SPDX Document for project Untitled Project
+<<<
+
+[SPDX_PACKAGE]
+UID: SPDXRef-PACKAGE
+SPDXID: SPDXRef-PACKAGE
+PRIMARY_PURPOSE: BOM
+TITLE: Requirements package
+STATEMENT: >>>
+SPDX Package for project Untitled Project
+<<<
+SUMMARY: >>>
+SPDX Package for project Untitled Project
+<<<
+
+[SECTION]
+TITLE: Files
+
+[SPDX_FILE]
+UID: SPDXRef-File-SDocDocument-StrictDoc
+SPDXID: SPDXRef-File-SDocDocument-StrictDoc
+PRIMARY_PURPOSE: DOCUMENTATION
+SUMMARY: SDPX File for document StrictDoc
+TITLE: hello.sdoc
+RELATIONS:
+- TYPE: File
+  VALUE: hello.sdoc
+- TYPE: Child
+  VALUE: SDOC-HIGH-REQS-MANAGEMENT
+  ROLE: CONTAINS
+- TYPE: Child
+  VALUE: SDOC-HIGH-REQS-DECOMP
+  ROLE: CONTAINS
+
+[/SECTION]
+
+[SECTION]
+TITLE: Snippets
+
+[SPDX_SNIPPET]
+UID: SDOC-HIGH-REQS-MANAGEMENT
+SPDXID: SDOC-HIGH-REQS-MANAGEMENT
+PRIMARY_PURPOSE: DOCUMENTATION
+SUMMARY: SPDX Snippet for requirement SDOC-HIGH-REQS-MANAGEMENT
+TITLE: Requirement 'Requirements management'
+RELATIONS:
+- TYPE: File
+  VALUE: hello.sdoc
+  LINE_RANGE: 7, 10
+
+[SPDX_SNIPPET]
+UID: SDOC-HIGH-REQS-DECOMP
+SPDXID: SDOC-HIGH-REQS-DECOMP
+PRIMARY_PURPOSE: DOCUMENTATION
+SUMMARY: SPDX Snippet for requirement SDOC-HIGH-REQS-DECOMP
+TITLE: Requirement 'Requirements decomposition'
+RELATIONS:
+- TYPE: File
+  VALUE: hello.sdoc
+  LINE_RANGE: 12, 18
+- TYPE: Parent
+  VALUE: SDOC-HIGH-REQS-MANAGEMENT
+  ROLE: REQUIREMENT_FOR
+
+[/SECTION]

@@ -1,0 +1,121 @@
+{
+    "_COMMENT": "Fields with _ are metadata. Fields without _ are the actual document/section/requirement/other content.",
+    "DOCUMENTS": [
+        {
+            "_NODE_TYPE": "DOCUMENT",
+            "MID": "e526fe19bd024f2ea7c84b9bccaf1243",
+            "ROOT": "true",
+            "_OPTIONS": {
+                "ENABLE_MID": true
+            },
+            "TITLE": "StrictDoc",
+            "GRAMMAR": {
+                "ELEMENTS": [
+                    {
+                        "NODE_TYPE": "TEXT",
+                        "FIELDS": [
+                            {
+                                "TITLE": "MID",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "UID",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "STATEMENT",
+                                "REQUIRED": "True",
+                                "TYPE": "String"
+                            }
+                        ],
+                        "RELATIONS": []
+                    },
+                    {
+                        "NODE_TYPE": "REQUIREMENT",
+                        "FIELDS": [
+                            {
+                                "TITLE": "MID",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "UID",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "LEVEL",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "STATUS",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "TAGS",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "TITLE",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "STATEMENT",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "RATIONALE",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            },
+                            {
+                                "TITLE": "COMMENT",
+                                "REQUIRED": "False",
+                                "TYPE": "String"
+                            }
+                        ],
+                        "RELATIONS": [
+                            {
+                                "TYPE": "Parent"
+                            },
+                            {
+                                "TYPE": "File"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "NODES": [
+                {
+                    "_TOC": "1",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "1f790299c6934c5a9edd12f8e9375dc7",
+                    "UID": "SDOC-HIGH-REQS-MANAGEMENT",
+                    "TITLE": "Requirements management",
+                    "STATEMENT": "StrictDoc shall enable requirements management."
+                },
+                {
+                    "_TOC": "2",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "877a0a7afa8949979a1a156472e9541c",
+                    "UID": "SDOC-HIGH-REQS-DECOMP",
+                    "TITLE": "Requirements decomposition",
+                    "STATEMENT": "StrictDoc shall support requirement decomposition.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-HIGH-REQS-MANAGEMENT"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

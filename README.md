@@ -10,12 +10,6 @@ The main utility of such OSLC server would be to enable traceability with a high
 
 ## Getting started
 
-### (Optional) Build the requirements site
-
-```sh
-
-```
-
 ### Run the OSLC server
 
 The OSLC server is a .NET application that includes a static website hosting, which we leverage to reduce the number of moving parts in this solution.
@@ -26,6 +20,16 @@ Install .NET 9 (you may also need to trust the HTTPS cert dotnet installs for lo
 cd src/StrictDocOslcRmServer/StrictDocOslcRm
 dotnet run
 ```
+
+### (Optional) Rebuild the requirements site
+
+Install [uv](https://docs.astral.sh/uv/) for Python first. Then run:
+
+```sh
+cd src/hellow-requirements/
+uvx --from=https://github.com/berezovskyi/strictdoc@b-conneg-uris --no-cache strictdoc export --formats html,json hello.sdoc
+```
+
 
 ## Exploring the OSLC services
 

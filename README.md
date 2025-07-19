@@ -4,7 +4,7 @@
 
 [StrictDoc](https://github.com/strictdoc-project/strictdoc) is a simple yet rigorous tool for requirements management. It aims to provide a plaintext requirements management sufficient for demonstrating conformance with ISO 26262, DO178 and similar standards (when combined with Git for configuration management and human-followed processes otherwise stipulated).
 
-This project provides a simple showcase of how an OSLC server for the Requirements Management domain could be added to the output of the HTML output of the StrictDoc, which is a static site.
+This project provides a simple showcase of how an OSLC server for the Requirements Management domain could be added to the HTML output of the StrictDoc, which is a static site.
 
 The main utility of such OSLC server would be to enable traceability with a higher fidelity than just pasting permanent links in the description field, e.g. in Jira.
 
@@ -27,7 +27,7 @@ Install [uv](https://docs.astral.sh/uv/) for Python first. Then run:
 
 ```sh
 cd src/hellow-requirements/
-uvx --from=https://github.com/berezovskyi/strictdoc@b-conneg-uris --no-cache strictdoc export --formats html,json hello.sdoc
+uvx --from=git+https://github.com/berezovskyi/strictdoc@b-conneg-uris --no-cache strictdoc export --formats html,json hello.sdoc
 ```
 
 

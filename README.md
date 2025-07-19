@@ -2,7 +2,7 @@
 
 ## Overview
 
-StrictDoc is a simple yet rigorous tool for requirements management. It aims to provide a plaintext requirements management sufficient for demonstrating conformance with ISO 26262, DO178 and similar standards (when combined with Git for configuration management and human-followed processes otherwise stipulated).
+[StrictDoc](https://github.com/strictdoc-project/strictdoc) is a simple yet rigorous tool for requirements management. It aims to provide a plaintext requirements management sufficient for demonstrating conformance with ISO 26262, DO178 and similar standards (when combined with Git for configuration management and human-followed processes otherwise stipulated).
 
 This project provides a simple showcase of how an OSLC server for the Requirements Management domain could be added to the output of the HTML output of the StrictDoc, which is a static site.
 
@@ -12,7 +12,7 @@ The main utility of such OSLC server would be to enable traceability with a high
 
 ### Run the OSLC server
 
-The OSLC server is a .NET application that includes a static website hosting, which we leverage to reduce the number of moving parts in this solution.
+The OSLC server is a .NET application that includes a static website hosting, which we leverage to reduce the number of moving parts in this solution. It uses [OSLC4Net](https://github.com/OSLC/oslc4net) for OSLC REST API implementation assistance.
 
 Install .NET 9 (you may also need to trust the HTTPS cert dotnet installs for localhost) and run:
 

@@ -27,7 +27,7 @@ Install [uv](https://docs.astral.sh/uv/) for Python first. Then run:
 
 ```sh
 cd src/hellow-requirements/
-uvx --from=git+https://github.com/berezovskyi/strictdoc@b-conneg-uris --no-cache strictdoc export --formats html,json hello.sdoc
+uvx strictdoc export --formats html,json hello.sdoc
 ```
 
 

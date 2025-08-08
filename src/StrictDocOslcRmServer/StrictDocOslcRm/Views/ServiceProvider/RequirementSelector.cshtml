@@ -14,17 +14,10 @@
 </head>
 <body>
     <main class="container-fluid">
-        @* <hgroup> *@
-        @*     <h1>Select Requirement</h1> *@
-        @*     <p>Find a specific OSLC resource through a free-text search.</p> *@
-        @* </hgroup> *@
         <input type="search" id="searchTerms" name="terms" value="@Html.Encode(termsValue)" placeholder="Begin typing to search for StrictDoc requirements" autofocus autocomplete="off"
                hx-trigger="input changed delay:160ms, keyup[key=='Enter']" hx-get="@Model.SelectorUri" hx-target="#search-results" hx-ext="aria-busy" />
         <div id="search-results">
-            @if (!string.IsNullOrWhiteSpace(Model.Terms))
-            {
-                @await Html.PartialAsync("_RequirementSelectorResults", Model)
-            }
+            @await Html.PartialAsync("_RequirementSelectorResults", Model)
         </div>
     </main>
     <script>

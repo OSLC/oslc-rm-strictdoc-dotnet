@@ -155,17 +155,7 @@ public class ServiceProviderController(
                 (r.Title ?? string.Empty).ToLowerInvariant().Contains(termLower) ||
                 (r.Identifier ?? string.Empty).ToLowerInvariant().Contains(termLower));
         }
-
-        // Content negotiation: if Accept JSON explicitly or query asks for json, return OSLC selection results JSON
-        var accept = request?.Headers["Accept"].ToString();
-        if ((accept != null &&
-             accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
-            && !string.Equals(accept, "text/html", StringComparison.OrdinalIgnoreCase))
-        {
-            var json = BuildSelectionResultsJson(filtered);
-            return Content(json, "application/json", Encoding.UTF8);
-        }
-
+        
         var isHtmx = request?.Headers.ContainsKey("HX-Request") == true || request?.Headers.ContainsKey("hx-request") == true;
 
         var model = new RequirementSelectionViewModel
@@ -182,32 +172,4 @@ public class ServiceProviderController(
 
         return View("RequirementSelector", model);
     }
-
-    private static string BuildSelectionResultsJson(IEnumerable<Requirement> requirements)
-    {
-        var sb = new StringBuilder();
-        sb.Append("{\n\"oslc:results\": [");
-        var first = true;
-        foreach (var r in requirements)
-        {
-            if (r.GetAbout() == null) continue;
-            if (!first) sb.Append(',');
-            first = false;
-            // Minimal JSON properties per OSLC Delegated Selection Dialog spec
-            sb.Append("{\"oslc:label\":\"")
-                .Append(EscapeJson(r.Title ?? r.Identifier ?? "Requirement"))
-                .Append("\",\"rdf:resource\":\"")
-                .Append(EscapeJson(r.GetAbout()!.ToString()))
-                .Append("\"}");
-        }
-
-        sb.Append("]\n}");
-        return sb.ToString();
-    }
-
-    private static string EscapeJson(string value) => value
-        .Replace("\\", "\\\\")
-        .Replace("\"", "\\\"")
-        .Replace("\r", "\\r")
-        .Replace("\n", "\\n");
 }

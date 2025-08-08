@@ -5,8 +5,8 @@ using OSLC4Net.Server.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddControllers(o => o.OutputFormatters.Insert(0, new OslcRdfOutputFormatter()));
+// Add services to the container (controllers + views for Razor selection dialog)
+builder.Services.AddControllersWithViews(o => o.OutputFormatters.Insert(0, new OslcRdfOutputFormatter()));
 
 // Configure CORS to allow requests from any domain
 builder.Services.AddCors(options =>
@@ -54,7 +54,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Map API controllers only
+// Map controllers (attribute routes) and enable view endpoints
 app.MapControllers();
 
 app.Run();

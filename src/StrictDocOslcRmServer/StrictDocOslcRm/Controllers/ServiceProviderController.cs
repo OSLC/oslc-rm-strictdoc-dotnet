@@ -148,7 +148,7 @@ public class ServiceProviderController(
                 (r.Title ?? string.Empty).ToLowerInvariant().Contains(termLower) ||
                 (r.Identifier ?? string.Empty).ToLowerInvariant().Contains(termLower));
         }
-        
+
         var isHtmx = request?.Headers.ContainsKey("HX-Request") == true || request?.Headers.ContainsKey("hx-request") == true;
 
         var model = new RequirementSelectionViewModel

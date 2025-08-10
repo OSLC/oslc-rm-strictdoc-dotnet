@@ -154,7 +154,7 @@ public class StrictDocService : IStrictDocService
         {
             if (string.Equals(node.NodeType, StrictDocNodeTypes.Requirement, StringComparison.Ordinal) && !string.IsNullOrEmpty(node.Uid))
             {
-                var requirement = CreateRequirementFromNode(node, documentMid, documentTitle, baseUrl);
+                var requirement = CreateRequirementFromNode(node, baseUrl);
                 requirements.Add(requirement);
             }
             else if (string.Equals(node.NodeType, StrictDocNodeTypes.CompositeRequirement, StringComparison.Ordinal))
@@ -174,7 +174,7 @@ public class StrictDocService : IStrictDocService
         return requirements;
     }
 
-    private static Requirement CreateRequirementFromNode(StrictDocNode node, string documentMid, string documentTitle, string? baseUrl = null)
+    private static Requirement CreateRequirementFromNode(StrictDocNode node, string? baseUrl = null)
     {
         var requirement = new Requirement();
 
@@ -213,7 +213,7 @@ public class StrictDocService : IStrictDocService
                         }
                     })
                     .ToArray();
-                requirement.Decomposes = new HashSet<Uri>(decomposes);
+                requirement.Decomposes = [.. decomposes];
             }
         }
 

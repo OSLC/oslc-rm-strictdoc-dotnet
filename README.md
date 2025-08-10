@@ -33,6 +33,68 @@ uvx strictdoc export --formats html,json hello.sdoc
 
 ## Exploring the OSLC services
 
+### Exploring the Docker build of the OSLC server
+
+We will start with a [standardized](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) well-known endpoint for OSLC:
+
+```sh
+curl -X GET 'http://localhost:8080/.well-known/oslc/rootservices.xml'
+```
+
+We will then proceed to list the services in the OSLC catalog:
+
+```sh
+curl -X GET 'http://localhost:8080/oslc/catalog' \
+  --header 'Accept: text/turtle;q=0.9, application/rdf+xml;q=0.7, application/ld+json;q=0.5, application/n-triples;q=0.3' \
+  --header 'OSLC-Core-Version: 2.0'
+```
+
+In our implementation, one StrictDoc document is mapped to one OSLC Service Provider. We can obtain the metadata for a specific provider in the catalog:
+
+```sh
+curl -X GET 'http://localhost:8080/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243' \
+  --header 'Accept: text/turtle;q=0.9, application/rdf+xml;q=0.7, application/ld+json;q=0.5, application/n-triples;q=0.3' \
+  --header 'OSLC-Core-Version: 2.0'
+```
+
+We can proceed to query all requirements within a given OSLC provider (i.e, within a StrictDoc document):
+
+```sh
+curl -X GET 'http://localhost:8080/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243/requirements' \
+  --header 'Accept: text/turtle;q=0.9, application/rdf+xml;q=0.7, application/ld+json;q=0.5, application/n-triples;q=0.3' \
+  --header 'OSLC-Core-Version: 2.0'
+```
+
+That would produce the following response graph:
+
+
+```turtle
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix oslc: <http://open-services.net/ns/core#>.
+
+<http://localhost:8080/?a=SDOC-HIGH-REQS-DECOMP> 
+    a <http://open-services.net/ns/rm#Requirement>;
+    <http://open-services.net/ns/rm#decomposes> <http://localhost:8080/?a=SDOC-HIGH-REQS-MANAGEMENT>;
+    dcterms:identifier "SDOC-HIGH-REQS-DECOMP";
+    dcterms:title "Requirements decomposition"^^rdf:XMLLiteral;
+    dcterms:description "StrictDoc shall support requirement decomposition."^^rdf:XMLLiteral.
+
+<http://localhost:8080/?a=SDOC-HIGH-REQS-MANAGEMENT> 
+    a <http://open-services.net/ns/rm#Requirement>;
+    dcterms:identifier "SDOC-HIGH-REQS-MANAGEMENT";
+    dcterms:title "Requirements management"^^rdf:XMLLiteral;
+    dcterms:description "StrictDoc shall enable requirements management."^^rdf:XMLLiteral.
+```
+
+Opening the `http://localhost:8080/?a=SDOC-HIGH-REQS-DECOMP` in the browser navigates directly to the requirement within the corresponding document:
+
+![](./docs/static/req-2-open.png)
+
+### Exploring the debug build of the OSLC server
+
 We will start with a [standardized](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) well-known endpoint for OSLC:
 
 ```sh

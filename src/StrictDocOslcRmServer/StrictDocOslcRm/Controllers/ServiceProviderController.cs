@@ -1,10 +1,8 @@
-
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using StrictDocOslcRm.Services;
-using System.Globalization;
 using OSLC4Net.Core.Model;
 using OSLC4Net.Domains.RequirementsManagement;
+using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Controllers;
 /// <summary>
@@ -22,8 +20,8 @@ public class ServiceProviderController(ILogger<ServiceProviderController> logger
     public async Task<ActionResult<OSLC4Net.Core.Model.ServiceProvider>> Get(string documentMid)
     {
         var documents = await strictDocService.GetDocumentsAsync();
-        var document = documents.FirstOrDefault(d => d.Mid == documentMid);
-        
+        var document = documents.FirstOrDefault(d => string.Equals(d.Mid, documentMid, StringComparison.Ordinal));
+
         if (document == null)
         {
             return NotFound($"Document with MID '{documentMid}' not found.");
@@ -60,9 +58,9 @@ public class ServiceProviderController(ILogger<ServiceProviderController> logger
     {
         var request = httpContextAccessor.HttpContext?.Request;
         var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
-        
+
         var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
-        
+
         if (!requirements.Any())
         {
             return NotFound($"No requirements found for document '{documentMid}'.");
@@ -85,7 +83,7 @@ public class ServiceProviderController(ILogger<ServiceProviderController> logger
     public async Task<ActionResult<Requirement>> GetRequirement(string documentMid, string requirementUid)
     {
         var requirement = await strictDocService.GetRequirementByUidAsync(requirementUid);
-        
+
         if (requirement == null)
         {
             return NotFound($"No requirement found with UID '{requirementUid}'.");

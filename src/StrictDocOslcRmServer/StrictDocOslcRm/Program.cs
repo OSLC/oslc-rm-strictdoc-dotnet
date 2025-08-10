@@ -1,7 +1,6 @@
-using System.Text.Json;
-using StrictDocOslcRm.Services;
-using StrictDocOslcRm.Middleware;
 using OSLC4Net.Server.Providers;
+using StrictDocOslcRm.Middleware;
+using StrictDocOslcRm.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +41,8 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+// 
+// app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors();

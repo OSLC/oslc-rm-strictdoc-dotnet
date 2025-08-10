@@ -1,0 +1,7 @@
+services:
+  strictdoc-oslc-rm:
+    image: ghcr.io/oslc/oslc-rm-strictdoc-dotnet:latest
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./src/hellow-requirements/output:/data

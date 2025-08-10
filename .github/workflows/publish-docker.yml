@@ -1,0 +1,88 @@
+name: "Docker publish to GHCR"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - '.github/workflows/publish-docker.yml'
+  release:
+    types: [published]
+  schedule:
+    # Weekly rebuild every Friday at 3:00 AM UTC to get latest base image updates
+    - cron: '0 3 * * 5'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check build trigger
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "🔄 This is a scheduled weekly rebuild to update base images"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            echo "🚀 This is a release build"
+          else
+            echo "📦 This is a regular build triggered by push"
+          fi
+          echo "Building OSLC RM server for StrictDoc"
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_BASE_NAME }}
+          tags: |
+            # For pushes to master branch or scheduled builds, tag as "latest"
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || github.event_name == 'schedule' }}
+            # For releases, create semantic version tags
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          labels: |
+            org.opencontainers.image.version="${{ github.event.release.tag_name || 'dev' }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./src/StrictDocOslcRmServer
+          file: ./src/StrictDocOslcRmServer/StrictDocOslcRm/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+        #   platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
+          cache-from: type=gha,scope=oslc-rm-strictdoc-amd64
+          cache-to: type=gha,mode=max,scope=oslc-rm-strictdoc-amd64
+          # For scheduled builds, don't use cache to ensure fresh base images
+          no-cache: ${{ github.event_name == 'schedule' }}
+          pull: true
+
+      - name: Output image details
+        run: |
+          echo "Image has been pushed to:"
+          echo "${{ steps.meta.outputs.tags }}" | while read -r tag; do
+            echo "  - $tag"
+          done

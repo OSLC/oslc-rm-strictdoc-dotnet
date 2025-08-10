@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.StaticFiles;
 using System.Net.Mime;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace StrictDocOslcRm.Middleware;
 
@@ -14,12 +14,12 @@ public class StaticFileWithContentNegotiationMiddleware
     private readonly string _staticFilesPath;
     private readonly string[] _oslcContentTypes = {
         "application/rdf+xml",
-        "text/turtle", 
+        "text/turtle",
         "application/ld+json"
     };
 
     public StaticFileWithContentNegotiationMiddleware(
-        RequestDelegate next, 
+        RequestDelegate next,
         IWebHostEnvironment environment,
         ILogger<StaticFileWithContentNegotiationMiddleware> logger,
         IConfiguration configuration)
@@ -27,40 +27,27 @@ public class StaticFileWithContentNegotiationMiddleware
         _next = next;
         _environment = environment;
         _logger = logger;
-        _staticFilesPath = configuration["StrictDoc:StaticFilesPath"] ?? 
-                          "/Users/ezandbe/code/a/oslc/oslc4net-misc/strictdoc-oslc/sdoc-hellow/output/html";
+        _staticFilesPath = configuration["StrictDoc:StaticFilesPath"] ?? throw new ArgumentNullException(nameof(configuration), "StrictDoc:StaticFilesPath configuration is required");
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
         // Check Accept header for content negotiation
         var acceptHeader = context.Request.Headers.Accept.ToString();
-        var requestsOslcContent = _oslcContentTypes.Any(ct => 
+        var requestsOslcContent = _oslcContentTypes.Any(ct =>
             acceptHeader.Contains(ct, StringComparison.OrdinalIgnoreCase));
 
         if (!requestsOslcContent)
         {
             // Try to serve static file instead
-            if (await TryServeStaticFileAsync(context))
+            if (await TryServeStaticFileAsync(context).ConfigureAwait(false))
             {
                 return;
             }
         }
 
         // Continue to next middleware
-        await _next(context);
-    }
-
-    private bool IsOslcRequest(HttpContext context)
-    {
-        var path = context.Request.Path.Value?.ToLowerInvariant();
-        
-        // Check if this is an OSLC endpoint
-        return path != null && (
-            path.StartsWith("/oslc/") ||
-            path.StartsWith("/service_provider/") ||
-            path.StartsWith("/requirements/")
-        );
+        await _next(context).ConfigureAwait(false);
     }
 
     private async Task<bool> TryServeStaticFileAsync(HttpContext context)
@@ -90,7 +77,7 @@ public class StaticFileWithContentNegotiationMiddleware
             // Security check - ensure the file is within the static files directory
             var fullStaticPath = Path.GetFullPath(staticFilePath);
             var fullBasePath = Path.GetFullPath(_staticFilesPath);
-            
+
             if (!fullStaticPath.StartsWith(fullBasePath, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("Attempted path traversal: {RequestPath}", requestPath);
@@ -107,12 +94,12 @@ public class StaticFileWithContentNegotiationMiddleware
                 }
 
                 context.Response.ContentType = contentType;
-                
-                await context.Response.SendFileAsync(fullStaticPath);
-                
-                _logger.LogDebug("Served static file: {FilePath} for request: {RequestPath}", 
+
+                await context.Response.SendFileAsync(fullStaticPath).ConfigureAwait(false);
+
+                _logger.LogDebug("Served static file: {FilePath} for request: {RequestPath}",
                     fullStaticPath, context.Request.Path);
-                
+
                 return true;
             }
         }

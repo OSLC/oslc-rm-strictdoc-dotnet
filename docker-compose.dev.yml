@@ -1,0 +1,11 @@
+services:
+  strictdoc-oslc-rm:
+    image: strictdoc-oslc-rm:dev
+    build:
+      context: src/StrictDocOslcRmServer/
+      # dockerfile: src/StrictDocOslcRmServer/StrictDocOslcRm/Dockerfile
+      dockerfile: StrictDocOslcRm/Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./src/hellow-requirements/output:/data

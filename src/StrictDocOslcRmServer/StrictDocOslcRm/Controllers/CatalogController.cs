@@ -21,7 +21,7 @@ public class CatalogController(ILogger<CatalogController> logger, IStrictDocServ
         try
         {
             var documents = await strictDocService.GetDocumentsAsync();
-            
+
             foreach (var document in documents)
             {
                 var serviceProvider = CreateServiceProvider(document);

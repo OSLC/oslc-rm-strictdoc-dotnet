@@ -1,14 +1,8 @@
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using StrictDocOslcRm.Services;
-using System.Globalization;
 using OSLC4Net.Core.Model;
 using OSLC4Net.Domains.RequirementsManagement;
-using System.Text;
-using System.Net;
-using StrictDocOslcRm.Models;
-
-// ReSharper disable StringLiteralTypo
+using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Controllers;
 
@@ -28,7 +22,7 @@ public class ServiceProviderController(
     public async Task<ActionResult<OSLC4Net.Core.Model.ServiceProvider>> Get(string documentMid)
     {
         var documents = await strictDocService.GetDocumentsAsync();
-        var document = documents.FirstOrDefault(d => d.Mid == documentMid);
+        var document = documents.FirstOrDefault(d => string.Equals(d.Mid, documentMid, StringComparison.Ordinal));
 
         if (document == null)
         {
@@ -82,8 +76,7 @@ public class ServiceProviderController(
         var request = httpContextAccessor.HttpContext?.Request;
         var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
 
-        var requirements =
-            await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
+        var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
 
         if (!requirements.Any())
         {

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using StrictDocOslcRm.Services;
 using OSLC4Net.Domains.RequirementsManagement;
+using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Controllers;
 
@@ -24,11 +24,11 @@ public class RequirementController(ILogger<RequirementController> logger,
 
         var request = httpContextAccessor.HttpContext?.Request;
         var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
-        
+
         // Get all requirements with correct baseUrl to ensure decomposes URIs are correct
         var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);
-        var requirement = allRequirements.FirstOrDefault(r => r.Identifier == a);
-        
+        var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
+
         if (requirement == null)
         {
             return NotFound($"No requirement found with UID '{a}'.");

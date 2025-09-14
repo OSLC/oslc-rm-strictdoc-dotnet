@@ -1,0 +1,22 @@
+@model StrictDocOslcRm.Models.RequirementSelectionViewModel
+<div class="grid" style="--block-spacing-vertical: 0.75rem">
+@{
+    var results = Model.Results.Take(50).ToList();
+    if (!results.Any())
+    {
+        <p>No results.</p>
+    }
+    else
+    {
+        foreach (var r in results)
+        {
+            var label = r.Title ?? r.Identifier ?? "Requirement";
+            var href = r.GetAbout()?.ToString();
+            if (href == null) continue;
+            <article>
+                <a href="@href" onclick="return sendOslcSelectionPostMessage(this,event)">@label</a>
+            </article>
+        }
+    }
+}
+</div>

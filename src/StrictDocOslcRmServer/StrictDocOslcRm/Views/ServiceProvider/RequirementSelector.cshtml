@@ -1,0 +1,44 @@
+@model StrictDocOslcRm.Models.RequirementSelectionViewModel
+@{
+    Layout = null; // standalone dialog page
+    var termsValue = Model.Terms ?? string.Empty;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requirement Selection Dialog</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@1/css/pico.min.css" />
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+</head>
+<body>
+    <main class="container-fluid">
+        <input type="search" id="searchTerms" name="terms" value="@Html.Encode(termsValue)" placeholder="Begin typing to search for StrictDoc requirements" autofocus autocomplete="off"
+               hx-trigger="input changed delay:160ms, keyup[key=='Enter']" hx-get="@Model.SelectorUri" hx-target="#search-results" hx-ext="aria-busy" />
+        <div id="search-results">
+            @await Html.PartialAsync("_RequirementSelectorResults", Model)
+        </div>
+    </main>
+    <script>
+        function sendOslcSelectionPostMessage(target, event) {
+            const message = {
+                'oslc:results': [{ 'oslc:label': target.text, 'rdf:resource': target.href }]
+            };
+            window.parent.postMessage('oslc-response:' + JSON.stringify(message), '*');
+            event.preventDefault();
+            return false;
+        }
+        htmx.defineExtension('aria-busy', {
+            onEvent: function (name, evt) {
+                var elt = evt.detail.elt;
+                if (name === 'htmx:beforeRequest') {
+                    elt.setAttribute('aria-busy', 'true');
+                } else if (name === 'htmx:afterRequest') {
+                    elt.removeAttribute('aria-busy');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

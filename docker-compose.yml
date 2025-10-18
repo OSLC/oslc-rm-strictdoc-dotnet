@@ -5,3 +5,7 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - ./src/hellow-requirements/output:/data
+    # Optional: Set public base URI for reverse proxy deployments
+    # Uncomment and modify the lines below if deploying behind a reverse proxy
+    # environment:
+    #   - OSLC__PublicBaseUri=https://example.com/strictdoc

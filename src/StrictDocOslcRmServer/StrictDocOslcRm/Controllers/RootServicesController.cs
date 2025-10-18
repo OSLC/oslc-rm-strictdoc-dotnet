@@ -1,19 +1,22 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Controllers;
 
 [ApiController]
 [Route("/.well-known/oslc/rootservices.xml")]
-public class RootServicesController(ILogger<RootServicesController> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : ControllerBase
+public class RootServicesController(
+    ILogger<RootServicesController> logger,
+    IBaseUrlService baseUrlService,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
     [Produces("application/rdf+xml")]
     public IActionResult GetRootServices()
     {
-        var request = httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
         var serviceTitle = WebUtility.HtmlEncode(configuration["OSLC:ServiceTitle"] ?? "OSLC Requirements Management server for StrictDoc");
 
         var rootServicesBody = $$"""

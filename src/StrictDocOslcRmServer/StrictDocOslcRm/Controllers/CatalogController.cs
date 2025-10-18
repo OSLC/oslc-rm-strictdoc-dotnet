@@ -10,7 +10,10 @@ namespace StrictDocOslcRm.Controllers;
 [ApiController]
 [Route("/oslc/catalog")]
 [Produces("application/rdf+xml", "text/turtle", "application/ld+json")]
-public class CatalogController(ILogger<CatalogController> logger, IStrictDocService strictDocService) : ControllerBase
+public class CatalogController(
+    ILogger<CatalogController> logger,
+    IBaseUrlService baseUrlService,
+    IStrictDocService strictDocService) : ControllerBase
 {
     [HttpGet]
     public async Task<OSLC4Net.Core.Model.ServiceProviderCatalog> Get()
@@ -41,7 +44,7 @@ public class CatalogController(ILogger<CatalogController> logger, IStrictDocServ
         var serviceProvider = new OSLC4Net.Core.Model.ServiceProvider();
 
         // Set the about URI for this service provider using the document MID
-        var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
         var serviceProviderUri = new Uri($"{baseUrl}/oslc/service_provider/{document.Mid}");
         serviceProvider.SetAbout(serviceProviderUri);
 

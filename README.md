@@ -75,14 +75,14 @@ That would produce the following response graph:
 @prefix dcterms: <http://purl.org/dc/terms/>.
 @prefix oslc: <http://open-services.net/ns/core#>.
 
-<http://localhost:8080/?a=SDOC-HIGH-REQS-DECOMP> 
+<http://localhost:8080/?a=SDOC-HIGH-REQS-DECOMP>
     a <http://open-services.net/ns/rm#Requirement>;
     <http://open-services.net/ns/rm#decomposes> <http://localhost:8080/?a=SDOC-HIGH-REQS-MANAGEMENT>;
     dcterms:identifier "SDOC-HIGH-REQS-DECOMP";
     dcterms:title "Requirements decomposition"^^rdf:XMLLiteral;
     dcterms:description "StrictDoc shall support requirement decomposition."^^rdf:XMLLiteral.
 
-<http://localhost:8080/?a=SDOC-HIGH-REQS-MANAGEMENT> 
+<http://localhost:8080/?a=SDOC-HIGH-REQS-MANAGEMENT>
     a <http://open-services.net/ns/rm#Requirement>;
     dcterms:identifier "SDOC-HIGH-REQS-MANAGEMENT";
     dcterms:title "Requirements management"^^rdf:XMLLiteral;
@@ -135,14 +135,14 @@ That would produce the following response graph:
 @prefix dcterms: <http://purl.org/dc/terms/>.
 @prefix oslc: <http://open-services.net/ns/core#>.
 
-<https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP> 
+<https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP>
     a <http://open-services.net/ns/rm#Requirement>;
     <http://open-services.net/ns/rm#decomposes> <https://localhost:7000/?a=SDOC-HIGH-REQS-MANAGEMENT>;
     dcterms:identifier "SDOC-HIGH-REQS-DECOMP";
     dcterms:title "Requirements decomposition"^^rdf:XMLLiteral;
     dcterms:description "StrictDoc shall support requirement decomposition."^^rdf:XMLLiteral.
 
-<https://localhost:7000/?a=SDOC-HIGH-REQS-MANAGEMENT> 
+<https://localhost:7000/?a=SDOC-HIGH-REQS-MANAGEMENT>
     a <http://open-services.net/ns/rm#Requirement>;
     dcterms:identifier "SDOC-HIGH-REQS-MANAGEMENT";
     dcterms:title "Requirements management"^^rdf:XMLLiteral;

@@ -15,7 +15,7 @@ namespace StrictDocOslcRm.Controllers;
 [Produces("application/rdf+xml", "text/turtle", "application/ld+json")]
 public class ServiceProviderController(
     ILogger<ServiceProviderController> logger,
-    IHttpContextAccessor httpContextAccessor,
+    IBaseUrlService baseUrlService,
     IStrictDocService strictDocService) : Controller
 {
     [HttpGet]
@@ -47,8 +47,7 @@ public class ServiceProviderController(
         queryCap.SetResourceShape(
             new Uri("http://open-services.net/ns/rm/shapes/3.0#RequirementShape"));
 
-        var request = httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
         queryCap.SetQueryBase(
             new Uri($"{baseUrl}/oslc/service_provider/{documentMid}/requirements"));
 
@@ -74,8 +73,7 @@ public class ServiceProviderController(
     [Route("{documentMid}/requirements")]
     public async Task<ActionResult<IEnumerable<Requirement>>> GetRequirements(string documentMid)
     {
-        var request = httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
 
         var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
 
@@ -109,8 +107,7 @@ public class ServiceProviderController(
         }
 
         // Set the About URI using new format
-        var request = httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
         requirement.SetAbout(new Uri($"{baseUrl}/?a={requirementUid}"));
 
         return Ok(requirement);
@@ -126,8 +123,7 @@ public class ServiceProviderController(
     public async Task<IActionResult> RequirementSelector(string documentMid,
         [FromQuery] string? terms = null)
     {
-        var request = httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
         var selectorUri = $"{baseUrl}/oslc/service_provider/{documentMid}/requirements/selector";
 
         // Load all requirements (reuse same sourcing logic as GetRequirements)
@@ -150,7 +146,7 @@ public class ServiceProviderController(
                 (r.Identifier ?? string.Empty).ToLowerInvariant().Contains(termLower));
         }
 
-        var isHtmx = request?.Headers.ContainsKey("HX-Request") == true || request?.Headers.ContainsKey("hx-request") == true;
+        var isHtmx = Request.Headers.ContainsKey("HX-Request") || Request.Headers.ContainsKey("hx-request");
 
         var model = new RequirementSelectionViewModel
         {

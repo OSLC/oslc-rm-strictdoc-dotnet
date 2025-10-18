@@ -9,8 +9,9 @@ namespace StrictDocOslcRm.Controllers;
 /// </summary>
 [ApiController]
 [Produces("application/rdf+xml", "text/turtle", "application/ld+json")]
-public class RequirementController(ILogger<RequirementController> logger,
-    IHttpContextAccessor httpContextAccessor,
+public class RequirementController(
+    ILogger<RequirementController> logger,
+    IBaseUrlService baseUrlService,
     IStrictDocService strictDocService) : ControllerBase
 {
     [HttpGet]
@@ -22,8 +23,7 @@ public class RequirementController(ILogger<RequirementController> logger,
             return BadRequest("Parameter 'a' (requirement UID) is required.");
         }
 
-        var request = httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request?.Host}{request?.PathBase}";
+        var baseUrl = baseUrlService.GetBaseUrl();
 
         // Get all requirements with correct baseUrl to ensure decomposes URIs are correct
         var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);

@@ -25,6 +25,9 @@ builder.Services.AddHttpContextAccessor();
 // Add memory cache for StrictDoc data caching
 builder.Services.AddMemoryCache();
 
+// Register base URL service for URI generation (supports reverse proxy scenarios)
+builder.Services.AddScoped<IBaseUrlService, BaseUrlService>();
+
 // Register StrictDoc service
 builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 

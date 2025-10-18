@@ -29,7 +29,7 @@ public class BaseUrlService : IBaseUrlService
     {
         // First, check if a public base URI is configured (for reverse proxy scenarios)
         var configuredBaseUri = _configuration["OSLC:PublicBaseUri"];
-        
+
         if (!string.IsNullOrWhiteSpace(configuredBaseUri))
         {
             // Remove trailing slash for consistency

@@ -44,7 +44,7 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-// 
+//
 // app.UseHttpsRedirection();
 
 // Enable CORS

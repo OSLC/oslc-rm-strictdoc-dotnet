@@ -10,7 +10,7 @@
     <PackageReference Include="OSLC4Net.Server.Providers" Version="0.6.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.6" />
     <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider" Version="0.6.0" />
-    <PackageReference Include="OSLC4Net.ChangeManagementCommon" Version="0.6.0" />
+    <PackageReference Include="OSLC4Net.ChangeManagementCommon" Version="0.6.2" />
     <PackageReference Include="OSLC4Net.Domains.RequirementsManagement" Version="0.6.0" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using OSLC4Net.Core.Model;
 using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
@@ -11,6 +12,7 @@ namespace StrictDocOslcRm.Controllers;
 /// Controller for individual requirement access using the new URI format
 /// </summary>
 [ApiController]
+[Produces("application/rdf+xml", "text/turtle", "application/ld+json", "application/json", "text/html")]
 public class RequirementController(
     ILogger<RequirementController> logger,
     IBaseUrlService baseUrlService,
@@ -67,27 +69,79 @@ public class RequirementController(
             };
         }
 
-        // Handle Compact resource request
-        if (compact != null)
+        // Handle Compact resource request (treat presence of the key as true, even if empty)
+        if (Request.Query.ContainsKey("compact"))
         {
+            var iconUri = $"{baseUrl}/icons/requirement.svg";
+            var smallDoc = $"{requirementUri}&preview=small";
+            var largeDoc = $"{requirementUri}&preview=large";
+
+            // If client prefers JSON, return the OSLC 3.0 Compact JSON shape (Appendix A)
+            var accept = Request.Headers.Accept.ToString();
+            // Add Vary header for proper caching with negotiation
+            Response.Headers.Vary = "Accept";
+            var wantsJson = string.IsNullOrWhiteSpace(accept)
+                            || accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+            var prefersRdf = accept.Contains("text/turtle", StringComparison.OrdinalIgnoreCase)
+                             || accept.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase)
+                             || accept.Contains("application/rdf+xml", StringComparison.OrdinalIgnoreCase);
+
+            // If client explicitly requests only text/html for compact, return 406
+            var acceptsHtmlOnly = !string.IsNullOrWhiteSpace(accept)
+                                  && accept.Contains("text/html", StringComparison.OrdinalIgnoreCase)
+                                  && !wantsJson
+                                  && !prefersRdf
+                                  && !accept.Contains("*/*", StringComparison.OrdinalIgnoreCase);
+            if (acceptsHtmlOnly)
+            {
+                return StatusCode(406, "Not Acceptable: compact representation is not text/html. Use Accept: application/json or an RDF type.");
+            }
+
+            if (wantsJson && !prefersRdf)
+            {
+                var compactDto = new
+                {
+                    title = requirement.Title ?? requirement.Identifier,
+                    shortTitle = requirement.Identifier,
+                    icon = iconUri,
+                    iconTitle = "Requirement",
+                    iconAltLabel = "Requirement",
+                    smallPreview = new
+                    {
+                        document = smallDoc,
+                        hintWidth = "320px",
+                        hintHeight = "200px"
+                    },
+                    largePreview = new
+                    {
+                        document = largeDoc,
+                        hintWidth = "600px",
+                        hintHeight = "400px"
+                    }
+                };
+
+                return new JsonResult(compactDto);
+            }
+
+            // Otherwise, return RDF/LD-friendly Compact resource
             var compactResource = new Compact();
             compactResource.SetAbout(new Uri($"{requirementUri}&compact"));
             compactResource.Title = requirement.Title ?? requirement.Identifier;
             compactResource.ShortTitle = requirement.Identifier;
-            compactResource.Icon = new Uri($"{baseUrl}/icons/requirement.svg");
+            compactResource.Icon = new Uri(iconUri);
             compactResource.IconTitle = "Requirement";
             compactResource.IconAltLabel = "Requirement";
 
             compactResource.SmallPreview = new Preview
             {
-                Document = new Uri($"{requirementUri}&preview=small"),
+                Document = new Uri(smallDoc),
                 HintWidth = "320px",
                 HintHeight = "200px"
             };
 
             compactResource.LargePreview = new Preview
             {
-                Document = new Uri($"{requirementUri}&preview=large"),
+                Document = new Uri(largeDoc),
                 HintWidth = "600px",
                 HintHeight = "400px"
             };

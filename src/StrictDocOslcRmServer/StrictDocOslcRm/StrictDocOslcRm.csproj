@@ -6,11 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <Oslc4NetVersion>0.6.2</Oslc4NetVersion>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="OSLC4Net.Server.Providers" Version="0.6.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.0" />
-    <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider" Version="0.6.0" />
-    <PackageReference Include="OSLC4Net.ChangeManagementCommon" Version="0.6.0" />
-    <PackageReference Include="OSLC4Net.Domains.RequirementsManagement" Version="0.6.0" />
+    <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider" Version="$(Oslc4NetVersion)" />
+    <PackageReference Include="OSLC4Net.Server.Providers" Version="$(Oslc4NetVersion)" />
+    <PackageReference Include="OSLC4Net.ChangeManagementCommon" Version="$(Oslc4NetVersion)" />
+    <PackageReference Include="OSLC4Net.Domains.RequirementsManagement" Version="$(Oslc4NetVersion)" />
   </ItemGroup>
 </Project>

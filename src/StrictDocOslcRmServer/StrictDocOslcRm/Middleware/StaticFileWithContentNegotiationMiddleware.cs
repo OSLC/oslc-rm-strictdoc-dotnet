@@ -35,7 +35,7 @@ public class StaticFileWithContentNegotiationMiddleware
         // Check if this is a preview or compact request - always pass to controller
         var hasPreviewParam = context.Request.Query.ContainsKey("preview");
         var hasCompactParam = context.Request.Query.ContainsKey("compact");
-        
+
         if (hasPreviewParam || hasCompactParam)
         {
             // Let the controller handle preview and compact requests

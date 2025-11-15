@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 
 COPY ["StrictDocOslcRm/StrictDocOslcRm.csproj", "StrictDocOslcRm/"]
@@ -10,7 +10,7 @@ WORKDIR "/src/StrictDocOslcRm"
 RUN dotnet publish "StrictDocOslcRm.csproj" -c Release -o /app/publish --self-contained -r linux-musl-x64 /p:DebugType=None /p:DebugSymbols=false
 
 # -extra adds full support for Unicode and timezones
-FROM mcr.microsoft.com/dotnet/runtime-deps:9.0-alpine-extra AS runtime
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine-extra AS runtime
 
 LABEL org.opencontainers.image.title="OSLC RM server for StrictDoc"
 LABEL org.opencontainers.image.description="OSLC server for StrictDoc in the Requirements Management domain"

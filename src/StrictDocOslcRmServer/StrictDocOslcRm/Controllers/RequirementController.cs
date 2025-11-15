@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
-using OSLC4Net.Domains.RequirementsManagement;
 using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
 using Compact = StrictDocOslcRm.Models.Compact;

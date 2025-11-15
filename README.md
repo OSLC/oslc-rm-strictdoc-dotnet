@@ -152,3 +152,86 @@ That would produce the following response graph:
 Opening the `https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP` in the browser navigates directly to the requirement within the corresponding document:
 
 ![](./docs/static/req-2-open.png)
+
+## OSLC Resource Preview Support
+
+This server implements [OSLC Resource Preview v3.0](https://docs.oasis-open-projects.org/oslc-op/core/v3.0/ps01/resource-preview.html), allowing client applications to display rich HTML previews of requirements without leaving their application context.
+
+### Discovering Compact Resources
+
+When requesting a requirement, the server includes a `Link` header pointing to its Compact resource:
+
+```sh
+curl -I 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP' \
+  --header 'Accept: text/turtle'
+```
+
+Response includes:
+```
+Link: <https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&compact>; rel="http://open-services.net/ns/core#Compact"
+```
+
+### Getting the Compact Resource
+
+Request the Compact resource to get preview URLs and display metadata:
+
+```sh
+curl -X GET 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&compact' \
+  --header 'Accept: application/json'
+```
+
+Response:
+```json
+{
+  "title": "Requirements decomposition",
+  "shortTitle": "SDOC-HIGH-REQS-DECOMP",
+  "icon": "https://localhost:7000/icons/requirement.svg",
+  "iconTitle": "Requirement",
+  "iconAltLabel": "Requirement",
+  "smallPreview": {
+    "document": "https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small",
+    "hintWidth": "320px",
+    "hintHeight": "200px"
+  },
+  "largePreview": {
+    "document": "https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=large",
+    "hintWidth": "600px",
+    "hintHeight": "400px"
+  }
+}
+```
+
+### Displaying Previews
+
+Previews are HTML documents designed to be embedded in iframes. They use PicoCSS for clean, minimal styling:
+
+**Small Preview** - Compact view with truncated description:
+```sh
+curl 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small'
+```
+
+**Large Preview** - Full view with metadata and relationships:
+```sh
+curl 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=large'
+```
+
+### Implementation Details
+
+- **Models**: `OslcCompactModels.cs` defines `Compact` and `Preview` resources with OSLC4Net annotations
+- **Controller**: `RequirementController.cs` provides endpoints for Compact resources and HTML previews
+- **Views**: Razor views in `Views/Requirement/` render small and large previews using PicoCSS v2
+- **Standards Compliance**: Implements OSLC Core 3.0 Part 3: Resource Preview specification
+
+### Client Integration Example
+
+Client applications can embed previews in iframes:
+
+```html
+<iframe
+  src="https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small"
+  width="320"
+  height="200"
+  style="border: 1px solid #ccc;">
+</iframe>
+```
+

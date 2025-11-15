@@ -1,0 +1,80 @@
+@model StrictDocOslcRm.Models.RequirementPreviewViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Requirement.Identifier</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@2/css/pico.min.css" />
+    <style>
+        :root {
+            --pico-font-size: 14px;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .preview-container {
+            padding: 0.75rem;
+            max-width: 100%;
+        }
+        .requirement-header {
+            margin-bottom: 0.5rem;
+        }
+        .requirement-id {
+            font-weight: 600;
+            color: var(--pico-primary);
+            font-size: 0.9rem;
+        }
+        .requirement-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin: 0.25rem 0;
+            line-height: 1.3;
+        }
+        .requirement-statement {
+            font-size: 0.85rem;
+            color: var(--pico-color);
+            margin: 0.5rem 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .preview-link {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        .preview-link a {
+            text-decoration: none;
+            color: var(--pico-primary);
+        }
+        .preview-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="requirement-header">
+            <div class="requirement-id">@Model.Requirement.Identifier</div>
+            @if (!string.IsNullOrWhiteSpace(Model.Requirement.Title))
+            {
+                <div class="requirement-title">@Html.Raw(Model.Requirement.Title)</div>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Requirement.Description))
+        {
+            <div class="requirement-statement">@Html.Raw(Model.Requirement.Description)</div>
+        }
+        <div class="preview-link">
+            <a href="@Model.RequirementUri" target="_blank">View full requirement →</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+@model StrictDocOslcRm.Models.RequirementPreviewViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Requirement.Identifier</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@2/css/pico.min.css" />
+    <style>
+        :root {
+            --pico-font-size: 15px;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .preview-container {
+            padding: 1rem;
+            max-width: 100%;
+        }
+        .requirement-header {
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--pico-muted-border-color);
+            padding-bottom: 0.75rem;
+        }
+        .requirement-id {
+            font-weight: 600;
+            color: var(--pico-primary);
+            font-size: 1.1rem;
+        }
+        .requirement-title {
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin: 0.5rem 0;
+            line-height: 1.4;
+        }
+        .requirement-statement {
+            font-size: 0.95rem;
+            color: var(--pico-color);
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+        .requirement-metadata {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--pico-muted-border-color);
+            font-size: 0.85rem;
+        }
+        .metadata-item {
+            margin: 0.5rem 0;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .metadata-label {
+            font-weight: 600;
+            min-width: 100px;
+            color: var(--pico-muted-color);
+        }
+        .metadata-value {
+            color: var(--pico-color);
+        }
+        .relations {
+            margin-top: 0.75rem;
+        }
+        .relation-link {
+            display: block;
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--pico-primary);
+        }
+        .relation-link:hover {
+            text-decoration: underline;
+        }
+        .preview-footer {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--pico-muted-border-color);
+            text-align: right;
+        }
+        .preview-footer a {
+            text-decoration: none;
+            color: var(--pico-primary);
+            font-weight: 500;
+        }
+        .preview-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="requirement-header">
+            <div class="requirement-id">@Model.Requirement.Identifier</div>
+            @if (!string.IsNullOrWhiteSpace(Model.Requirement.Title))
+            {
+                <div class="requirement-title">@Html.Raw(Model.Requirement.Title)</div>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Requirement.Description))
+        {
+            <div class="requirement-statement">
+                @Html.Raw(Model.Requirement.Description)
+            </div>
+        }
+
+        <div class="requirement-metadata">
+            @if (Model.Requirement.Decomposes != null && Model.Requirement.Decomposes.Any())
+            {
+                <div class="metadata-item">
+                    <div class="metadata-label">Decomposes:</div>
+                    <div class="metadata-value relations">
+                        @foreach (var parent in Model.Requirement.Decomposes)
+                        {
+                            var parentId = parent.ToString().Split('=').Last();
+                            <a href="@parent" class="relation-link" target="_blank">@parentId</a>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Requirement.Identifier))
+            {
+                <div class="metadata-item">
+                    <div class="metadata-label">Identifier:</div>
+                    <div class="metadata-value">@Model.Requirement.Identifier</div>
+                </div>
+            }
+        </div>
+
+        <div class="preview-footer">
+            <a href="@Model.RequirementUri" target="_blank">View full requirement in StrictDoc →</a>
+        </div>
+    </div>
+</body>
+</html>

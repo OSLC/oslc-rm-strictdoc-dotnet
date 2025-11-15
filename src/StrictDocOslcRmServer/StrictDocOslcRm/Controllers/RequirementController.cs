@@ -44,9 +44,16 @@ public class RequirementController(
 
         var requirementUri = $"{baseUrl}/?a={a}";
 
-        // Handle HTML preview requests
+        // Handle HTML preview requests - require text/html Accept header
         if (!string.IsNullOrEmpty(preview))
         {
+            // Check if client accepts HTML
+            var acceptHeader = Request.Headers.Accept.ToString();
+            if (!acceptHeader.Contains("text/html") && !acceptHeader.Contains("*/*"))
+            {
+                return StatusCode(406, "Not Acceptable: text/html is required for preview requests");
+            }
+
             var model = new RequirementPreviewViewModel
             {
                 Requirement = requirement,
@@ -65,7 +72,7 @@ public class RequirementController(
         if (compact != null)
         {
             var compactResource = new Compact();
-            compactResource.SetAbout(new Uri($"{requirementUri}?compact"));
+            compactResource.SetAbout(new Uri($"{requirementUri}&compact"));
             compactResource.Title = requirement.Title ?? requirement.Identifier;
             compactResource.ShortTitle = requirement.Identifier;
             compactResource.Icon = new Uri($"{baseUrl}/icons/requirement.svg");
@@ -74,14 +81,14 @@ public class RequirementController(
 
             compactResource.SmallPreview = new Preview
             {
-                Document = new Uri($"{requirementUri}?preview=small"),
+                Document = new Uri($"{requirementUri}&preview=small"),
                 HintWidth = "320px",
                 HintHeight = "200px"
             };
 
             compactResource.LargePreview = new Preview
             {
-                Document = new Uri($"{requirementUri}?preview=large"),
+                Document = new Uri($"{requirementUri}&preview=large"),
                 HintWidth = "600px",
                 HintHeight = "400px"
             };
@@ -94,7 +101,7 @@ public class RequirementController(
 
         // Add Link header for Compact resource (OSLC Resource Preview spec)
         Response.Headers.Append("Link",
-            $"<{requirementUri}?compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\"");
+            $"<{requirementUri}&compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\"");
 
         return Ok(requirement);
     }

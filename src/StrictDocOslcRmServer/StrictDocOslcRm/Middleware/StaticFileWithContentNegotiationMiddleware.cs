@@ -32,6 +32,17 @@ public class StaticFileWithContentNegotiationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Check if this is a preview or compact request - always pass to controller
+        var hasPreviewParam = context.Request.Query.ContainsKey("preview");
+        var hasCompactParam = context.Request.Query.ContainsKey("compact");
+        
+        if (hasPreviewParam || hasCompactParam)
+        {
+            // Let the controller handle preview and compact requests
+            await _next(context).ConfigureAwait(false);
+            return;
+        }
+
         // Check Accept header for content negotiation
         var acceptHeader = context.Request.Headers.Accept.ToString();
         var requestsOslcContent = _oslcContentTypes.Any(ct =>

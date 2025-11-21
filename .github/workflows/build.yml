@@ -108,9 +108,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build --configuration Release --no-restore
+      # https://tunit.dev/docs/examples/tunit-ci-pipeline#complete-workflow-with-matrix-strategy
       - name: Test
-        run: dotnet test --no-build --verbosity normal --collect:"XPlat Code Coverage"
+        run: dotnet test --configuration Release --no-build --coverage --report-trx
       # - name: Upload coverage reports to Codecov
       #   uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
       #   env:

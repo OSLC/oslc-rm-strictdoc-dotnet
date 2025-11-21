@@ -2,10 +2,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using StrictDocOslcRm.Controllers;
-using StrictDocOslcRm.Models;
-using StrictDocOslcRm.Services;
 using OSLC4Net.Domains.RequirementsManagement;
+using StrictDocOslcRm.Controllers;
+using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Tests;
 
@@ -46,10 +45,10 @@ public class RequirementControllerTests
         _strictDocService.GetAllRequirementsAsync(baseUrl).Returns(new List<Requirement> { requirement });
 
         // Act
-        var result = await _controller.GetRequirementResource(uid, null, null);
+        var result = await _controller.GetRequirementResource(uid, null, null).ConfigureAwait(false);
 
         // Assert
         var okResult = result as OkObjectResult;
-        await Verify(okResult?.Value);
+        await Verify(okResult?.Value).ConfigureAwait(false);
     }
 }

@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
+using EmptyFiles;
 using OSLC4Net.Core.DotNetRdfProvider;
 using OSLC4Net.Core.Model;
 using VDS.RDF;
 using VDS.RDF.Writing;
-using EmptyFiles;
 
 namespace StrictDocOslcRm.Tests;
 

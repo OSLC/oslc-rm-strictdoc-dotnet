@@ -51,7 +51,6 @@ public static class VerifyConfiguration
 
                 // https://www.w3.org/TR/rdf-canon/ prescribes N-Quads serialization, but let's try Turtle for better readability
                 var ttlWriter = new CompressingTurtleWriter();
-                // ttlWriter.Save(graph, writer);
                 ttlWriter.Save(newGraph, writer);
                 return new ConversionResult(null, "ttl", writer.ToString());
             });

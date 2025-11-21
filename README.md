@@ -153,6 +153,13 @@ Opening the `https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP` in the browser nav
 
 ![](./docs/static/req-2-open.png)
 
+## OSLC Selection Dialog Support
+
+OSLC RM server for StrictDoc supports requirements selection with live search:
+
+![](./docs/static/oslc-1-select.png)
+
+
 ## OSLC Resource Preview Support
 
 This server implements [OSLC Resource Preview v3.0](https://docs.oasis-open-projects.org/oslc-op/core/v3.0/ps01/resource-preview.html), allowing client applications to display rich HTML previews of requirements without leaving their application context.
@@ -214,6 +221,12 @@ curl 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small'
 ```sh
 curl 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=large'
 ```
+
+Selection dialogs and previews were validated against [Jira OSLC
+Client](https://lynxwork.com/products/jira-oslc-client) from Lynxwork:
+
+![](./docs/static/oslc-2-preview.png)
+
 
 ### Implementation Details
 

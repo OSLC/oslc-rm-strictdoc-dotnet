@@ -16,7 +16,7 @@
     <PackageReference Include="OSLC4Net.Core" Version="0.6.3" />
     <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider" Version="0.6.3" />
     <PackageReference Include="OSLC4Net.Domains.RequirementsManagement" Version="0.6.3" />
-    <PackageReference Include="TUnit" Version="1.2.11" />
+    <PackageReference Include="TUnit" Version="1.3.25" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />

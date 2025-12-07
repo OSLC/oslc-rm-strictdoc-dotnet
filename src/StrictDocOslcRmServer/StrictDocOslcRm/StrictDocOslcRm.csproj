@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Oslc4NetVersion>0.6.3</Oslc4NetVersion>
+    <Oslc4NetVersion>0.7.0-preview.2</Oslc4NetVersion>
   </PropertyGroup>
 
   <ItemGroup>

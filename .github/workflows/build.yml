@@ -33,7 +33,7 @@ jobs:
         working-directory: main/src/StrictDocOslcRmServer/
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           disable-sudo: true
           egress-policy: audit
@@ -44,7 +44,7 @@ jobs:
           persist-credentials: false
           path: main
       - name: Setup .NET
-        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
         with:
           dotnet-version: 10.x
       - name: Restore dependencies
@@ -82,7 +82,7 @@ jobs:
       # TAG_VALUE: ${{ github.ref_name || inputs.version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           disable-sudo: true
           egress-policy: audit
@@ -93,12 +93,12 @@ jobs:
           persist-credentials: false
           path: main
       - name: Setup .NET
-        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
         with:
           dotnet-version: ${{ matrix.version.setup }}
       - name: Cache NuGet
         # id: cache-nuget
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         # env:
         #   cache-name: cache-node-modules
         with:

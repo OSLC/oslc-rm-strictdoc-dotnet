@@ -3,13 +3,11 @@ name: "Docker publish to GHCR"
 on:
   push:
     branches: [main]
-    paths:
+    paths: &docker_paths
       - 'src/**'
       - '.github/workflows/publish-docker.yml'
   pull_request:
-    paths:
-      - 'src/**'
-      - '.github/workflows/publish-docker.yml'
+    paths: *docker_paths
   release:
     types: [published]
   schedule:

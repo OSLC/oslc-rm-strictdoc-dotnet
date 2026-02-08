@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+ARG TARGETARCH
 WORKDIR /src
 
 COPY ["StrictDocOslcRm/StrictDocOslcRm.csproj", "StrictDocOslcRm/"]
@@ -7,7 +8,7 @@ RUN dotnet restore "StrictDocOslcRm/StrictDocOslcRm.csproj"
 COPY . .
 WORKDIR "/src/StrictDocOslcRm"
 # WARN: trim break the conneg for some reason
-RUN dotnet publish "StrictDocOslcRm.csproj" -c Release -o /app/publish --self-contained -r linux-musl-x64 /p:DebugType=None /p:DebugSymbols=false
+RUN dotnet publish "StrictDocOslcRm.csproj" -c Release -o /app/publish --self-contained -a $TARGETARCH /p:DebugType=None /p:DebugSymbols=false
 
 # -extra adds full support for Unicode and timezones
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine-extra AS runtime

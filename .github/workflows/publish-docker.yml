@@ -78,7 +78,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          # platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=oslc-rm-strictdoc-multiarch
           cache-to: type=gha,mode=max,scope=oslc-rm-strictdoc-multiarch
           # For scheduled builds, don't use cache to ensure fresh base images

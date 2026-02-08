@@ -28,6 +28,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Check build trigger
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
@@ -72,10 +75,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-        #   platforms: linux/amd64,linux/arm64
-          platforms: linux/amd64
-          cache-from: type=gha,scope=oslc-rm-strictdoc-amd64
-          cache-to: type=gha,mode=max,scope=oslc-rm-strictdoc-amd64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          cache-from: type=gha,scope=oslc-rm-strictdoc-multiarch
+          cache-to: type=gha,mode=max,scope=oslc-rm-strictdoc-multiarch
           # For scheduled builds, don't use cache to ensure fresh base images
           no-cache: ${{ github.event_name == 'schedule' }}
           pull: true

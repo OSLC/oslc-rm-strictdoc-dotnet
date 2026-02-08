@@ -35,6 +35,8 @@ uvx strictdoc export --formats html,json hello.sdoc
 
 ### Exploring the Docker build of the OSLC server
 
+The published container image supports linux/amd64, linux/arm64, and linux/arm/v7 platforms via CI multi-arch builds.
+
 We will start with a [standardized](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) well-known endpoint for OSLC:
 
 ```sh
@@ -247,4 +249,3 @@ Client applications can embed previews in iframes:
   style="border: 1px solid #ccc;">
 </iframe>
 ```
-

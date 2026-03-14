@@ -31,12 +31,21 @@ builder.Services.AddScoped<IBaseUrlService, BaseUrlService>();
 // Register StrictDoc service
 builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 
+// Configure HSTS options
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 else
@@ -46,6 +55,9 @@ else
 
 //
 // app.UseHttpsRedirection();
+
+// Add security headers middleware
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 // Enable CORS
 app.UseCors();
@@ -61,3 +73,5 @@ app.UseRouting();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

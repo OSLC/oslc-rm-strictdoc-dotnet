@@ -19,7 +19,7 @@
     <PackageReference Include="TUnit" Version="1.21.30" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
     <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.1" />
     <PackageReference Include="Verify.TUnit" Version="31.13.5" />
   </ItemGroup>
 

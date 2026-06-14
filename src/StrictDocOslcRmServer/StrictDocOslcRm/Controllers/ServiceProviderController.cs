@@ -128,16 +128,17 @@ public class ServiceProviderController(
             return StatusCode(501, exception.Message);
         }
 
-        var responseInfoAbout = queryBase +
-            (Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty);
-
-        return new OslcQueryContainerResult(
-            queryBase,
-            responseInfoAbout,
-            outcome.NextPage,
+        // OslcRdfOutputFormatter serializes the oslc:ResponseInfo container (totalCount,
+        // rdfs:member, nextPage) and derives the container/responseInfo subject URIs from the
+        // request. The next-page URI is supplied here so the filter and projection are preserved.
+        var nextPage = outcome.NextPage is null ? null : new Uri(outcome.NextPage);
+        var responseInfo = new ResponseInfoArray<Requirement>(
+            outcome.Members.ToArray(),
+            outcome.SelectedProperties,
             outcome.TotalCount,
-            outcome.Members,
-            outcome.SelectedProperties);
+            nextPage!);
+
+        return Ok(responseInfo);
     }
 
     private static int? ParseIntParameter(string? value) =>

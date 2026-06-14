@@ -14,7 +14,7 @@ The main utility of such OSLC server would be to enable traceability with a high
 
 The OSLC server is a .NET application that includes a static website hosting, which we leverage to reduce the number of moving parts in this solution. It uses [OSLC4Net](https://github.com/OSLC/oslc4net) for OSLC REST API implementation assistance.
 
-Install .NET 9 (you may also need to trust the HTTPS cert dotnet installs for localhost) and run:
+Install .NET 10 (you may also need to trust the HTTPS cert dotnet installs for localhost) and run:
 
 ```
 cd src/StrictDocOslcRmServer/StrictDocOslcRm

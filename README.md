@@ -155,6 +155,34 @@ Opening the `https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP` in the browser nav
 
 ![](./docs/static/req-2-open.png)
 
+## OSLC Query Support
+
+The query capability is a full [OSLC Query](https://docs.oasis-open-projects.org/oslc-op/query/v3.0/os/oslc-query.html)
+endpoint. The response is an `oslc:ResponseInfo` container that reports
+`oslc:totalCount`, links members with `rdfs:member`, and advertises `oslc:nextPage`
+when the result is paged. The following parameters are supported:
+
+| Parameter | Purpose |
+|---|---|
+| `oslc.prefix` | Declares prefixes used by the other clauses. Common prefixes (`dcterms`, `oslc`, `oslc_rm`, `rdf`, `rdfs`, `xsd`) are predefined. |
+| `oslc.where` | Filters requirements. Supports `=`, `!=`, `<`, `>`, `<=`, `>=` and `in [...]` over `dcterms:*`, `oslc_rm:*` and `rdf:type` properties. |
+| `oslc.select` | Projects the listed properties onto each member (`*` returns all). |
+| `oslc.orderBy` | Sorts members (`+prop` ascending, `-prop` descending). |
+| `oslc.searchTerms` | Full-text match against title, description and identifier. |
+| `oslc.pageSize` | Page size; the next page is returned via `oslc:nextPage`. |
+
+Filtering, ordering and search are evaluated on the server; an invalid expression
+returns `400 Bad Request`, and an unsupported construct returns `501 Not Implemented`.
+
+```sh
+curl -G 'http://localhost:8080/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243/requirements' \
+  --header 'Accept: text/turtle' \
+  --header 'OSLC-Core-Version: 2.0' \
+  --data-urlencode 'oslc.prefix=dcterms=<http://purl.org/dc/terms/>' \
+  --data-urlencode 'oslc.where=dcterms:identifier="SDOC-HIGH-REQS-DECOMP"' \
+  --data-urlencode 'oslc.select=dcterms:title'
+```
+
 ## OSLC Selection Dialog Support
 
 OSLC RM server for StrictDoc supports requirements selection with live search:

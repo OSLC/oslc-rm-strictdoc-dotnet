@@ -16,7 +16,8 @@ namespace StrictDocOslcRm.Controllers;
 public class ServiceProviderController(
     ILogger<ServiceProviderController> logger,
     IBaseUrlService baseUrlService,
-    IStrictDocService strictDocService) : Controller
+    IStrictDocService strictDocService,
+    IOslcQueryService oslcQueryService) : Controller
 {
     [HttpGet]
     [Route("{documentMid}")]
@@ -69,18 +70,25 @@ public class ServiceProviderController(
         return serviceProvider;
     }
 
+    /// <summary>
+    /// OSLC Query capability for a document's requirements.
+    /// Supports oslc.prefix, oslc.where, oslc.select, oslc.orderBy, oslc.searchTerms and
+    /// oslc.pageSize, returning an oslc:ResponseInfo container with oslc:totalCount and
+    /// rdfs:member links.
+    /// </summary>
     [HttpGet]
     [Route("{documentMid}/requirements")]
-    public async Task<ActionResult<IEnumerable<Requirement>>> GetRequirements(string documentMid)
+    public async Task<IActionResult> GetRequirements(string documentMid)
     {
         var baseUrl = baseUrlService.GetBaseUrl();
 
-        var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
-
-        if (!requirements.Any())
+        var documents = await strictDocService.GetDocumentsAsync();
+        if (documents.All(d => !string.Equals(d.Mid, documentMid, StringComparison.Ordinal)))
         {
-            return NotFound($"No requirements found for document '{documentMid}'.");
+            return NotFound($"Document with MID '{documentMid}' not found.");
         }
+
+        var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
 
         // Set the About URI for each requirement using new format
         foreach (var requirement in requirements)
@@ -91,7 +99,59 @@ public class ServiceProviderController(
             }
         }
 
-        return Ok(requirements);
+        var queryBase = $"{baseUrl}/oslc/service_provider/{documentMid}/requirements";
+        var pageSize = ParseIntParameter(Request.Query["oslc.pageSize"]);
+        var page = ParseIntParameter(Request.Query["page"]) ?? 1;
+
+        OslcQueryOutcome outcome;
+        try
+        {
+            outcome = oslcQueryService.Apply(
+                requirements,
+                Request.Query["oslc.prefix"],
+                Request.Query["oslc.where"],
+                Request.Query["oslc.select"],
+                Request.Query["oslc.orderBy"],
+                Request.Query["oslc.searchTerms"],
+                pageSize,
+                page,
+                nextPage => BuildPageUri(queryBase, Request.Query, nextPage));
+        }
+        catch (OslcQueryBadRequestException exception)
+        {
+            logger.LogInformation("Rejected OSLC query for {DocumentMid}: {Message}", documentMid, exception.Message);
+            return BadRequest(exception.Message);
+        }
+        catch (OslcQueryNotImplementedException exception)
+        {
+            logger.LogInformation("Unsupported OSLC query for {DocumentMid}: {Message}", documentMid, exception.Message);
+            return StatusCode(501, exception.Message);
+        }
+
+        var responseInfoAbout = queryBase +
+            (Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty);
+
+        return new OslcQueryContainerResult(
+            queryBase,
+            responseInfoAbout,
+            outcome.NextPage,
+            outcome.TotalCount,
+            outcome.Members,
+            outcome.SelectedProperties);
+    }
+
+    private static int? ParseIntParameter(string? value) =>
+        int.TryParse(value, out var parsed) && parsed > 0 ? parsed : null;
+
+    // Repeat the current query parameters on the next page so the filter, projection and ordering
+    // are preserved, overriding only the page marker.
+    private static string BuildPageUri(string queryBase, IQueryCollection query, int page)
+    {
+        var pairs = query
+            .Where(pair => !string.Equals(pair.Key, "page", StringComparison.OrdinalIgnoreCase))
+            .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value.ToString())}")
+            .Append($"page={page}");
+        return $"{queryBase}?{string.Join('&', pairs)}";
     }
 
     [HttpGet]

@@ -31,6 +31,9 @@ builder.Services.AddScoped<IBaseUrlService, BaseUrlService>();
 // Register StrictDoc service
 builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 
+// Register OSLC Query evaluation service (oslc.where/select/orderBy/searchTerms/paging)
+builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

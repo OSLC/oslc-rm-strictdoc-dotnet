@@ -100,13 +100,13 @@ Opening the `http://localhost:8080/?a=SDOC-HIGH-REQS-DECOMP` in the browser navi
 We will start with a [standardized](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) well-known endpoint for OSLC:
 
 ```sh
-curl -X GET 'https://localhost:7000/.well-known/oslc/rootservices.xml'
+curl -X GET 'https://localhost:8085/.well-known/oslc/rootservices.xml'
 ```
 
 We will then proceed to list the services in the OSLC catalog:
 
 ```sh
-curl -X GET 'https://localhost:7000/oslc/catalog' \
+curl -X GET 'https://localhost:8085/oslc/catalog' \
   --header 'Accept: text/turtle;q=0.9, application/rdf+xml;q=0.7, application/ld+json;q=0.5, application/n-triples;q=0.3' \
   --header 'OSLC-Core-Version: 2.0'
 ```
@@ -114,7 +114,7 @@ curl -X GET 'https://localhost:7000/oslc/catalog' \
 In our implementation, one StrictDoc document is mapped to one OSLC Service Provider. We can obtain the metadata for a specific provider in the catalog:
 
 ```sh
-curl -X GET 'https://localhost:7000/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243' \
+curl -X GET 'https://localhost:8085/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243' \
   --header 'Accept: text/turtle;q=0.9, application/rdf+xml;q=0.7, application/ld+json;q=0.5, application/n-triples;q=0.3' \
   --header 'OSLC-Core-Version: 2.0'
 ```
@@ -122,7 +122,7 @@ curl -X GET 'https://localhost:7000/oslc/service_provider/e526fe19bd024f2ea7c84b
 We can proceed to query all requirements within a given OSLC provider (i.e, within a StrictDoc document):
 
 ```sh
-curl -X GET 'https://localhost:7000/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243/requirements' \
+curl -X GET 'https://localhost:8085/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243/requirements' \
   --header 'Accept: text/turtle;q=0.9, application/rdf+xml;q=0.7, application/ld+json;q=0.5, application/n-triples;q=0.3' \
   --header 'OSLC-Core-Version: 2.0'
 ```
@@ -137,21 +137,21 @@ That would produce the following response graph:
 @prefix dcterms: <http://purl.org/dc/terms/>.
 @prefix oslc: <http://open-services.net/ns/core#>.
 
-<https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP>
+<https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP>
     a <http://open-services.net/ns/rm#Requirement>;
-    <http://open-services.net/ns/rm#decomposes> <https://localhost:7000/?a=SDOC-HIGH-REQS-MANAGEMENT>;
+    <http://open-services.net/ns/rm#decomposes> <https://localhost:8085/?a=SDOC-HIGH-REQS-MANAGEMENT>;
     dcterms:identifier "SDOC-HIGH-REQS-DECOMP";
     dcterms:title "Requirements decomposition"^^rdf:XMLLiteral;
     dcterms:description "StrictDoc shall support requirement decomposition."^^rdf:XMLLiteral.
 
-<https://localhost:7000/?a=SDOC-HIGH-REQS-MANAGEMENT>
+<https://localhost:8085/?a=SDOC-HIGH-REQS-MANAGEMENT>
     a <http://open-services.net/ns/rm#Requirement>;
     dcterms:identifier "SDOC-HIGH-REQS-MANAGEMENT";
     dcterms:title "Requirements management"^^rdf:XMLLiteral;
     dcterms:description "StrictDoc shall enable requirements management."^^rdf:XMLLiteral.
 ```
 
-Opening the `https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP` in the browser navigates directly to the requirement within the corresponding document:
+Opening the `https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP` in the browser navigates directly to the requirement within the corresponding document:
 
 ![](./docs/static/req-2-open.png)
 
@@ -175,7 +175,7 @@ Filtering, ordering and search are evaluated on the server; an invalid expressio
 returns `400 Bad Request`, and an unsupported construct returns `501 Not Implemented`.
 
 ```sh
-curl -G 'http://localhost:8080/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243/requirements' \
+curl -G 'https://localhost:8085/oslc/service_provider/e526fe19bd024f2ea7c84b9bccaf1243/requirements' \
   --header 'Accept: text/turtle' \
   --header 'OSLC-Core-Version: 2.0' \
   --data-urlencode 'oslc.prefix=dcterms=<http://purl.org/dc/terms/>' \
@@ -199,13 +199,13 @@ This server implements [OSLC Resource Preview v3.0](https://docs.oasis-open-proj
 When requesting a requirement, the server includes a `Link` header pointing to its Compact resource:
 
 ```sh
-curl -I 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP' \
+curl -I 'https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP' \
   --header 'Accept: text/turtle'
 ```
 
 Response includes:
 ```
-Link: <https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&compact>; rel="http://open-services.net/ns/core#Compact"
+Link: <https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&compact>; rel="http://open-services.net/ns/core#Compact"
 ```
 
 ### Getting the Compact Resource
@@ -213,7 +213,7 @@ Link: <https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&compact>; rel="http://ope
 Request the Compact resource to get preview URLs and display metadata:
 
 ```sh
-curl -X GET 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&compact' \
+curl -X GET 'https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&compact' \
   --header 'Accept: application/json'
 ```
 
@@ -222,16 +222,16 @@ Response:
 {
   "title": "Requirements decomposition",
   "shortTitle": "SDOC-HIGH-REQS-DECOMP",
-  "icon": "https://localhost:7000/icons/requirement.svg",
+  "icon": "https://localhost:8085/icons/requirement.svg",
   "iconTitle": "Requirement",
   "iconAltLabel": "Requirement",
   "smallPreview": {
-    "document": "https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small",
+    "document": "https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&preview=small",
     "hintWidth": "320px",
     "hintHeight": "200px"
   },
   "largePreview": {
-    "document": "https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=large",
+    "document": "https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&preview=large",
     "hintWidth": "600px",
     "hintHeight": "400px"
   }
@@ -244,12 +244,12 @@ Previews are HTML documents designed to be embedded in iframes. They use PicoCSS
 
 **Small Preview** - Compact view with truncated description:
 ```sh
-curl 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small'
+curl 'https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&preview=small'
 ```
 
 **Large Preview** - Full view with metadata and relationships:
 ```sh
-curl 'https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=large'
+curl 'https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&preview=large'
 ```
 
 Selection dialogs and previews were validated against [Jira OSLC
@@ -271,7 +271,7 @@ Client applications can embed previews in iframes:
 
 ```html
 <iframe
-  src="https://localhost:7000/?a=SDOC-HIGH-REQS-DECOMP&preview=small"
+  src="https://localhost:8085/?a=SDOC-HIGH-REQS-DECOMP&preview=small"
   width="320"
   height="200"
   style="border: 1px solid #ccc;">

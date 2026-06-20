@@ -2,7 +2,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 ARG TARGETARCH
 WORKDIR /src
 
-COPY ["StrictDocOslcRm/StrictDocOslcRm.csproj", "StrictDocOslcRm/"]
+COPY ["Directory.Packages.props", "."]
+COPY ["StrictDocOslcRm/StrictDocOslcRm.csproj", "./StrictDocOslcRm/"]
 RUN dotnet restore "StrictDocOslcRm/StrictDocOslcRm.csproj"
 
 COPY . .

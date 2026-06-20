@@ -179,13 +179,13 @@ public class StrictDocService : IStrictDocService
         var requirement = new Requirement();
 
         // Map UID to Identifier and URI
-        requirement.Identifier = node.Uid;
+        requirement.Identifier = node.Uid ?? throw new InvalidOperationException("Node UID is required for requirement mapping");
 
         // Map TITLE to Title
-        requirement.Title = node.Title;
+        requirement.Title = node.Title ?? "No Title";
 
         // Map STATEMENT to Description
-        requirement.Description = node.Statement;
+        requirement.Description = node.Statement ?? "No Description";
 
         // Process RELATIONS with type PARENT to Decomposes property
         if (node.Relations != null)

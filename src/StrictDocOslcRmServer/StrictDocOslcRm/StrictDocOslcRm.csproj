@@ -7,15 +7,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Oslc4NetVersion>0.7.0-preview.6</Oslc4NetVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="10.0.9" />
-    <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider" Version="$(Oslc4NetVersion)" />
-    <PackageReference Include="OSLC4Net.Core.Query" Version="$(Oslc4NetVersion)" />
-    <PackageReference Include="OSLC4Net.Server.Providers" Version="$(Oslc4NetVersion)" />
-    <PackageReference Include="OSLC4Net.ChangeManagementCommon" Version="$(Oslc4NetVersion)" />
-    <PackageReference Include="OSLC4Net.Domains.RequirementsManagement" Version="$(Oslc4NetVersion)" />
+    <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider"  />
+    <PackageReference Include="OSLC4Net.Core.Query"  />
+    <PackageReference Include="OSLC4Net.Server.Providers"  />
+    <PackageReference Include="OSLC4Net.ChangeManagementCommon"  />
+    <PackageReference Include="OSLC4Net.Domains.RequirementsManagement"  />
   </ItemGroup>
 </Project>

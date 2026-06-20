@@ -8,7 +8,7 @@ using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Tests;
 
-public class RequirementControllerTests
+public class RequirementControllerTests : IAsyncDisposable
 {
     private readonly RequirementController _controller;
     private readonly IStrictDocService _strictDocService;
@@ -27,6 +27,20 @@ public class RequirementControllerTests
             HttpContext = new DefaultHttpContext()
         };
     }
+
+    public ValueTask DisposeAsync()
+    {
+        try
+        {
+            _controller.Dispose();
+        }
+        catch
+        {
+            // Ignore any exceptions during disposal
+        }
+        return ValueTask.CompletedTask;
+    }
+
 
     [Test]
     public async Task GetRequirementResource_ReturnsOk()

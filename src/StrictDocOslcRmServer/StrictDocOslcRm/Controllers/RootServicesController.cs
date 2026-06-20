@@ -16,6 +16,7 @@ public class RootServicesController(
     [Produces("application/rdf+xml")]
     public IActionResult GetRootServices()
     {
+        logger.LogDebug("Received request for OSLC Root Services document");
         var baseUrl = baseUrlService.GetBaseUrl();
         var serviceTitle = WebUtility.HtmlEncode(configuration["OSLC:ServiceTitle"] ?? "OSLC Requirements Management server for StrictDoc");
 

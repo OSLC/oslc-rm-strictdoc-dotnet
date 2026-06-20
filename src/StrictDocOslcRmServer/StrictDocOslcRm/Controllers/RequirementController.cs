@@ -98,6 +98,8 @@ public class RequirementController(
 
             if (wantsJson && !prefersRdf)
             {
+                logger.LogDebug("Client prefers plain JSON for compact resource, returning OSLC 3.0 Compact JSON shape");
+
                 var compactDto = new
                 {
                     title = requirement.Title ?? requirement.Identifier,

@@ -41,7 +41,6 @@ public class RequirementControllerTests : IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
-
     [Test]
     public async Task GetRequirementResource_ReturnsOk()
     {

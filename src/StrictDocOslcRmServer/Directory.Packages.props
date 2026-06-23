@@ -5,7 +5,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <DotnetRuntimeVersion>10.0.9</DotnetRuntimeVersion>
-    <Oslc4NetVersion>0.7.0-preview.6</Oslc4NetVersion>
+    <Oslc4NetVersion>99.99.99.9999</Oslc4NetVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="System.Text.Json" Version="$(DotnetRuntimeVersion)" />

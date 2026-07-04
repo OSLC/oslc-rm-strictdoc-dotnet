@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
 using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
-using VDS.RDF.Parsing;
 
 namespace StrictDocOslcRm.Controllers;
 

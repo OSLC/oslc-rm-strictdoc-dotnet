@@ -1,16 +1,14 @@
+using System.Net;
+using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
-using OSLC4Net.Core.Model;
 using OSLC4Net.Domains.RequirementsManagement;
-using StrictDocOslcRm.Services;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Net;
 using OSLC4Net.Server.Providers;
+using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Tests;
 
@@ -83,7 +81,7 @@ public class RequirementControllerIntegrationTests
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         await Assert.That(content).Contains("Test Integration Requirement");
         await Assert.That(content).Contains("This is a test integration requirement");
         await Assert.That(content).Contains("http://open-services.net/ns/rm#Requirement");
@@ -121,7 +119,7 @@ public class RequirementControllerIntegrationTests
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         await Assert.That(content).Contains("XML Integration Requirement");
         await Assert.That(content).Contains("This requirement is retrieved in XML format");
         await Assert.That(content).Contains("<rdf:RDF");

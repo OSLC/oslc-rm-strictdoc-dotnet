@@ -15,5 +15,6 @@
     <PackageReference Include="OSLC4Net.Server.Providers"  />
     <PackageReference Include="OSLC4Net.ChangeManagementCommon"  />
     <PackageReference Include="OSLC4Net.Domains.RequirementsManagement"  />
+    <PackageReference Include="Microsoft.Web.LibraryManager.Build" />
   </ItemGroup>
 </Project>

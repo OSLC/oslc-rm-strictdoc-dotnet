@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
 using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
-using Compact = StrictDocOslcRm.Models.Compact;
-using Preview = StrictDocOslcRm.Models.Preview;
 using VDS.RDF.Parsing;
 
 namespace StrictDocOslcRm.Controllers;
@@ -12,11 +10,18 @@ namespace StrictDocOslcRm.Controllers;
 /// Controller for individual requirement access using the new URI format
 /// </summary>
 [ApiController]
-[Produces("application/rdf+xml", "text/turtle", "application/ld+json", "application/json", "text/html")]
+[Produces(
+    "application/rdf+xml",
+    "text/turtle",
+    "application/ld+json",
+    "application/json",
+    "text/html"
+)]
 public class RequirementController(
     ILogger<RequirementController> logger,
     IBaseUrlService baseUrlService,
-    IStrictDocService strictDocService) : Controller
+    IStrictDocService strictDocService
+) : Controller
 {
     /// <summary>
     /// Unified endpoint for requirement resources, compact resources, and HTML previews.
@@ -27,7 +32,8 @@ public class RequirementController(
     public async Task<IActionResult> GetRequirementResource(
         [FromQuery] string a,
         [FromQuery] string? compact,
-        [FromQuery] string? preview)
+        [FromQuery] string? preview
+    )
     {
         if (string.IsNullOrEmpty(a))
         {
@@ -36,7 +42,9 @@ public class RequirementController(
 
         var baseUrl = baseUrlService.GetBaseUrl();
         var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);
-        var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
+        var requirement = allRequirements.FirstOrDefault(r =>
+            string.Equals(r.Identifier, a, StringComparison.Ordinal)
+        );
 
         if (requirement == null)
         {
@@ -52,20 +60,23 @@ public class RequirementController(
             var acceptHeader = Request.Headers.Accept.ToString();
             if (!acceptHeader.Contains("text/html") && !acceptHeader.Contains("*/*"))
             {
-                return StatusCode(406, "Not Acceptable: text/html is required for preview requests");
+                return StatusCode(
+                    406,
+                    "Not Acceptable: text/html is required for preview requests"
+                );
             }
 
             var model = new RequirementPreviewViewModel
             {
                 Requirement = requirement,
-                RequirementUri = requirementUri
+                RequirementUri = requirementUri,
             };
 
             return preview.ToLower() switch
             {
                 "small" => View("SmallPreview", model),
                 "large" => View("LargePreview", model),
-                _ => BadRequest($"Invalid preview type: {preview}. Use 'small' or 'large'.")
+                _ => BadRequest($"Invalid preview type: {preview}. Use 'small' or 'large'."),
             };
         }
 
@@ -80,26 +91,34 @@ public class RequirementController(
             var accept = Request.Headers.Accept.ToString();
             // Add Vary header for proper caching with negotiation
             Response.Headers.Vary = "Accept";
-            var wantsJson = string.IsNullOrWhiteSpace(accept)
-                            || accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
-            var prefersRdf = accept.Contains("text/turtle", StringComparison.OrdinalIgnoreCase)
-                             || accept.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase)
-                             || accept.Contains("application/rdf+xml", StringComparison.OrdinalIgnoreCase);
+            var wantsJson =
+                string.IsNullOrWhiteSpace(accept)
+                || accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+            var prefersRdf =
+                accept.Contains("text/turtle", StringComparison.OrdinalIgnoreCase)
+                || accept.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase)
+                || accept.Contains("application/rdf+xml", StringComparison.OrdinalIgnoreCase);
 
             // If client explicitly requests only text/html for compact, return 406
-            var acceptsHtmlOnly = !string.IsNullOrWhiteSpace(accept)
-                                  && accept.Contains("text/html", StringComparison.OrdinalIgnoreCase)
-                                  && !wantsJson
-                                  && !prefersRdf
-                                  && !accept.Contains("*/*", StringComparison.OrdinalIgnoreCase);
+            var acceptsHtmlOnly =
+                !string.IsNullOrWhiteSpace(accept)
+                && accept.Contains("text/html", StringComparison.OrdinalIgnoreCase)
+                && !wantsJson
+                && !prefersRdf
+                && !accept.Contains("*/*", StringComparison.OrdinalIgnoreCase);
             if (acceptsHtmlOnly)
             {
-                return StatusCode(406, "Not Acceptable: compact representation is not text/html. Use Accept: application/json or an RDF type.");
+                return StatusCode(
+                    406,
+                    "Not Acceptable: compact representation is not text/html. Use Accept: application/json or an RDF type."
+                );
             }
 
             if (wantsJson && !prefersRdf)
             {
-                logger.LogDebug("Client prefers plain JSON for compact resource, returning OSLC 3.0 Compact JSON shape");
+                logger.LogDebug(
+                    "Client prefers plain JSON for compact resource, returning OSLC 3.0 Compact JSON shape"
+                );
 
                 var compactDto = new CompactDto
                 {
@@ -112,14 +131,14 @@ public class RequirementController(
                     {
                         Document = smallDoc,
                         HintWidth = "320px",
-                        HintHeight = "200px"
+                        HintHeight = "200px",
                     },
                     LargePreview = new PreviewDto
                     {
                         Document = largeDoc,
                         HintWidth = "600px",
-                        HintHeight = "400px"
-                    }
+                        HintHeight = "400px",
+                    },
                 };
 
                 return new JsonResult(compactDto);
@@ -137,14 +156,14 @@ public class RequirementController(
             {
                 Document = new Uri(smallDoc),
                 HintWidth = "320px",
-                HintHeight = "200px"
+                HintHeight = "200px",
             };
 
             compactResource.LargePreview = new Preview
             {
                 Document = new Uri(largeDoc),
                 HintWidth = "600px",
-                HintHeight = "400px"
+                HintHeight = "400px",
             };
 
             return Ok(compactResource);
@@ -154,8 +173,10 @@ public class RequirementController(
         requirement.SetAbout(new Uri(requirementUri));
 
         // Add Link header for Compact resource (OSLC Resource Preview spec)
-        Response.Headers.Append("Link",
-            $"<{requirementUri}&compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\"");
+        Response.Headers.Append(
+            "Link",
+            $"<{requirementUri}&compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\""
+        );
 
         return Ok(requirement);
     }

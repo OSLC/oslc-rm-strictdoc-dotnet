@@ -336,3 +336,6 @@ healthchecksdb
 
 # ASP.NET Core
 appsettings.Production.json
+
+# LibMan local dependencies
+src/StrictDocOslcRmServer/StrictDocOslcRm/wwwroot/lib/

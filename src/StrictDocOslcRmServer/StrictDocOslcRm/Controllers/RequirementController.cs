@@ -4,6 +4,7 @@ using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
 using Compact = StrictDocOslcRm.Models.Compact;
 using Preview = StrictDocOslcRm.Models.Preview;
+using VDS.RDF.Parsing;
 
 namespace StrictDocOslcRm.Controllers;
 
@@ -100,24 +101,24 @@ public class RequirementController(
             {
                 logger.LogDebug("Client prefers plain JSON for compact resource, returning OSLC 3.0 Compact JSON shape");
 
-                var compactDto = new
+                var compactDto = new CompactDto
                 {
-                    title = requirement.Title ?? requirement.Identifier,
-                    shortTitle = requirement.Identifier,
-                    icon = iconUri,
-                    iconTitle = "Requirement",
-                    iconAltLabel = "Requirement",
-                    smallPreview = new
+                    Title = requirement.Title ?? requirement.Identifier,
+                    ShortTitle = requirement.Identifier,
+                    Icon = iconUri,
+                    IconTitle = "Requirement",
+                    IconAltLabel = "Requirement",
+                    SmallPreview = new PreviewDto
                     {
-                        document = smallDoc,
-                        hintWidth = "320px",
-                        hintHeight = "200px"
+                        Document = smallDoc,
+                        HintWidth = "320px",
+                        HintHeight = "200px"
                     },
-                    largePreview = new
+                    LargePreview = new PreviewDto
                     {
-                        document = largeDoc,
-                        hintWidth = "600px",
-                        hintHeight = "400px"
+                        Document = largeDoc,
+                        HintWidth = "600px",
+                        HintHeight = "400px"
                     }
                 };
 
@@ -125,10 +126,9 @@ public class RequirementController(
             }
 
             // Otherwise, return RDF/LD-friendly Compact resource
-            var compactResource = new Compact();
-            compactResource.SetAbout(new Uri($"{requirementUri}&compact"));
-            compactResource.Title = requirement.Title ?? requirement.Identifier;
-            compactResource.ShortTitle = requirement.Identifier;
+            var compactResource = new Compact(new Uri($"{requirementUri}&compact"));
+            compactResource.Title = requirement.Title ?? requirement.Identifier ?? "";
+            compactResource.ShortTitle = requirement.Identifier ?? "";
             compactResource.Icon = new Uri(iconUri);
             compactResource.IconTitle = "Requirement";
             compactResource.IconAltLabel = "Requirement";

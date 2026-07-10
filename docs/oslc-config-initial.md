@@ -17,6 +17,16 @@ The related documents are:
 - [Configuration management proposal](./CONFIGURATION_MANAGEMENT_PROPOSAL.md),
   an earlier proposal whose SQLite recommendation is not part of this initial
   file-layout milestone.
+- [Jazz configuration-management notes](./jazz-config.md), practical Jazz
+  evidence that elevates several generic OSLC SHOULD/MAY capabilities when
+  they are needed for Jazz interoperability.
+
+The normative baseline for this plan is the local OSLC Configuration
+Management specification in
+`/Users/ezandbe/code/a/oslc/oslc-op/oslc-specs/specs/config/`, especially
+`config-resources.html`, `versioned-resources.html`, `config-vocab.ttl`, and
+`config-shapes.ttl`. The Linking Profiles note and the Jazz material are
+interoperability guidance layered on top of that specification.
 
 ## Decision summary
 
@@ -152,8 +162,8 @@ The registry should be able to map externally supplied GCM context URIs to the
 same local descriptor if the client does not use provider-owned configuration
 URIs.
 
-The resolver should support both OSLC context mechanisms already identified in
-the repository:
+The resolver must support both OSLC context mechanisms required by the OSLC
+Configuration Management specification:
 
 ```text
 Configuration-Context: <configuration-uri>
@@ -168,14 +178,25 @@ and:
 Rules:
 
 1. If both are absent, use one configured default stream, initially
-   `{defaultBranch}/HEAD`.
-2. If both are present and differ, return `400 Bad Request`.
-3. If a context URI is syntactically valid but unknown, return `404 Not Found`
+   `{defaultBranch}/HEAD`. The specification permits a server to fail instead;
+   Jazz interoperability makes a default stream the better initial choice.
+2. If both are present, the query-string context wins. Do not reject merely
+   because the header and query values differ.
+3. If two or more query-string context values differ, return `400 Bad Request`.
+   Multiple identical values can be treated as one. Multiple differing
+   `Configuration-Context` header values must also be rejected; identical
+   repeated values can be treated as one.
+4. If a context URI is syntactically valid but unknown, return `404 Not Found`
    rather than silently falling back to the default.
-4. If a context identifies a baseline, classify it as immutable from the
+5. If a context identifies a baseline, classify it as immutable from the
    resolved `Tag`, not from a client-controlled flag.
-5. Pass the resolved descriptor explicitly through services; do not use a
+6. Pass the resolved descriptor explicitly through services; do not use a
    mutable process-global “current context”.
+
+For header-based requests, return `Vary: Configuration-Context` in addition to
+the normal content-negotiation variation. Permit `Configuration-Context` in
+the CORS allowed-header list when CORS is enabled. A context on a version URI
+is ignored; a context on a non-versioned resource is not an error.
 
 ## Read behavior
 
@@ -196,8 +217,12 @@ the server should:
 6. return the representation with the context-sensitive cache headers.
 
 The same UID may resolve to a different requirement representation under
-`main/v1.2.0`. The resource URI can remain stable because the selected
+`main/v1.2.0`. The concept-resource URI can remain stable because the selected
 configuration is part of request context rather than part of the concept URI.
+The response should also identify the selected version resource. A version
+resource must be typed `oslc_config:VersionResource` and link to the concept
+with exactly one `dcterms:isVersionOf` assertion. A GET of that version URI
+returns that version and ignores further configuration context.
 
 The context must also flow into:
 
@@ -207,6 +232,12 @@ The context must also flow into:
   version;
 - link sidecar reads, so a Jazz link from one stream does not appear in another
   stream by accident.
+
+For context-aware representations, implement the version-resource behavior
+before claiming full configuration conformance: in a stream, GET resolves the
+selected version and PUT may eventually create a new version; in a baseline,
+the selected version is read-only. The initial PUT milestone can still remain
+link-only by rejecting changes to StrictDoc-owned content.
 
 If HTML exports vary by branch or baseline, publish them beside the JSON export
 and resolve them from the same descriptor. If they are initially identical,
@@ -237,7 +268,9 @@ For a stream PUT:
 
 For a baseline PUT, return a clear immutable-context error and do not open the
 sidecar for writing. The exact status (`405` or `409`) should be selected with
-the Jazz client test, but the result must not be a successful mutation.
+the Jazz client test, but the result must not be a successful mutation. A
+version-resource PUT is a later capability: it must not be confused with a
+concept-resource link-only PUT.
 
 PUT should gain conditional-update support when the client supplies
 `If-Match`. The ETag must represent the selected context, JSON export revision,
@@ -302,15 +335,32 @@ Configuration Management vocabulary and shapes for that metadata.
 
 ## Configuration resource surface
 
-The smallest useful local configuration surface is:
+The smallest useful local configuration surface is a standard component and
+its configuration containers, not only a list of stream URLs:
 
-- one `Stream` resource for each published `{branch}/HEAD` directory;
-- one `Baseline` resource for each published `{branch}/{tag}` directory where
-  `tag != HEAD`;
-- query and selection capability sufficient for a client to discover those
-  resources;
+- one `oslc_config:Component` resource for the configured StrictDoc dataset;
+- an `oslc_config:configurations` container on that component;
+- one `oslc_config:Stream` resource for each published `{branch}/HEAD`
+  directory;
+- one `oslc_config:Baseline` resource for each published `{branch}/{tag}`
+  directory where `tag != HEAD`;
+- `oslc_config:streams` and `oslc_config:baselines` containers on the relevant
+  configuration resources;
+- standard `oslc_config:component`, `branch`, `previousBaseline`,
+  `baselineOfStream`, `selections`, and `configuration` relationships as
+  applicable to each resource;
+- HEAD, OPTIONS, and GET for component, configuration, and selection resources;
+- query and delegated selection capability sufficient for a client to discover
+  and choose those resources; and
 - a stable mapping from each configuration resource URI to its context
   descriptor.
+
+The configuration specification requires version-resource behavior for
+versioned concept resources and requires configuration-selection delegated UI.
+The initial implementation should provide read-only selections and the
+selection dialog even though configuration creation, change sets, and global
+configuration composition are deferred. Configuration query is optional in the
+base specification but is a practical Jazz requirement for discovery.
 
 The heliple2 implementation is a useful example for exposing configuration
 query, resource, compact, and preview endpoints. The refimpl comparison shows
@@ -321,7 +371,8 @@ Defer the following until a concrete client requires them:
 
 - global configurations spanning multiple providers;
 - contribution traversal and nested configuration resolution;
-- change-set resources and version-resource mutation;
+- change-set resources and version-resource mutation beyond read-only version
+  resolution;
 - OSLC Link Discovery Management;
 - creation or deletion of StrictDoc requirements through OSLC.
 
@@ -333,37 +384,45 @@ Add an `IConfigurationContextResolver` and `ConfigurationContext` model. Cover
 header/query/default behavior, conflict rejection, unknown contexts, safe path
 validation, and context-aware error responses.
 
-### 2. Context-aware StrictDoc loading
+### 2. Version-resource representation
+
+Add stable version-resource identifiers and the required
+`oslc_config:VersionResource`/`dcterms:isVersionOf` graph. Make context-aware
+GET return the selected version while keeping the concept-resource URI stable;
+make version-URI GET ignore context. Keep version-resource mutation out of the
+initial link-only PUT implementation.
+
+### 3. Context-aware StrictDoc loading
 
 Change the StrictDoc service API to accept a context descriptor. Key parsed-data
 caches by context URI plus export revision, and ensure negative caches are also
 context-scoped. Preserve the current UID/resource URI mapping.
 
-### 3. Context-aware sidecars
+### 4. Context-aware sidecars
 
 Change the sidecar API to accept the resolved context. Move the file path from a
 single configured store to `/data/{branch}/{tag}/sidecar.json`, retain the
 N-Triples payload, and implement atomic file replacement per context.
 
-### 4. Link policy enforcement
+### 5. Link policy enforcement
 
 Move the predicate allowlist into a named policy based on
 [link-ownership.md](./link-ownership.md). Add tests proving that StrictDoc
 fields and unapproved predicates cannot be persisted, while approved link
 assertions round-trip only within their selected context.
 
-### 5. Stream/baseline discovery
+### 6. Stream/baseline discovery
 
 Expose the minimal OSLC Configuration Management resources and query/selection
 capabilities. Start with local provider-owned context URIs; add external URI
 mapping only when the Jazz/GCM flow demonstrates that it is needed.
 
-### 6. Conditional updates and cache correctness
+### 7. Conditional updates and cache correctness
 
 Add context/export/sidecar-aware ETags, `If-Match` handling, `Vary` headers, and
 tests for stale updates and stream/baseline isolation.
 
-### 7. End-to-end Jazz verification
+### 8. End-to-end Jazz verification
 
 Verify, in order:
 
@@ -378,8 +437,13 @@ Verify, in order:
 
 - A requirement GET under two contexts can return two different exports while
   preserving the concept-resource URI.
+- A context-aware requirement representation identifies a
+  `oslc_config:VersionResource` whose `dcterms:isVersionOf` points to the
+  concept resource, and a GET of the version URI ignores context.
 - No context-sensitive request reads the old global JSON path after migration.
 - Query, preview, compact, and direct resource responses use the same context.
+- Header and query context precedence follows the specification, including
+  query-string precedence and rejection of conflicting repeated values.
 - Stream PUT cannot modify StrictDoc-owned fields.
 - Baseline PUT cannot mutate either `strictdoc.json` or `sidecar.json`.
 - Only the approved link predicates are written, with the exact subject URI.
@@ -393,33 +457,26 @@ Verify, in order:
 These decisions should be made before implementation begins:
 
 - the provider-owned URI shape for streams and baselines;
+- the provider-owned URI shape for version resources and how their immutable
+  identifiers are derived from an export revision;
+- whether one StrictDoc dataset remains one component or is partitioned into
+  multiple components;
 - how external GCM context URIs map to local `{branch}/{tag}` descriptors;
 - whether the initial Jazz flow needs local configuration resources or only
   context-header/query handling;
 - whether secondary/incoming link predicates remain a Jazz compatibility mode
-  or are rejected in strict Config-profile mode;
+  or are rejected in strict Config-profile mode; the Jazz evidence favors
+  owner-side storage plus context-aware discovery as the canonical model;
 - how sidecar links are copied, merged, or intentionally not copied when a
   stream produces a baseline or a new branch;
 - the exact immutable-baseline response status for PUT.
 
-## Wiki audit
+## Jazz evidence
 
-The supplied wiki snapshot was inspected for the files with configuration and
-Jazz-related names, including:
-
-```text
-wiki/bin/attach/Deployment/CLMCfgMRecommendedPractices
-wiki/bin/attach/Deployment/CLMUsageModelBestPractices
-wiki/bin/attach/Deployment/IntegratingWithConfigurationManagementEnabledCLMApplications
-wiki/bin/attach/Main/AppSdkConsumingBaseline
-wiki/bin/attach/Main/AssociatingGlobalConfigurationsAndReleases
-wiki/bin/attach/Main/3016x_RRCStreamSetUp
-```
-
-Those files are HTML login responses (`Jazz Community Site - Login`), not the
-underlying Jazz articles. They contain no usable configuration-management
-protocol or deployment guidance, so this design does not create
-`docs/jazz-config.md` or derive requirements from those files. The actionable
-Jazz evidence available in this repository remains
-[JAZZ_INTEROP.md](./JAZZ_INTEROP.md).
-
+The fetched Jazz material is useful and is summarized in
+[jazz-config.md](./jazz-config.md). The most important interoperability
+adjustment is to treat Jazz’s directional-link behavior as a design constraint:
+the sidecar may support the existing link-only compatibility PUT, but it should
+not be mistaken for a canonical target-side backlink store. The eventual
+configuration-aware implementation should resolve incoming links from the
+owner-side publication/discovery path in the active context.

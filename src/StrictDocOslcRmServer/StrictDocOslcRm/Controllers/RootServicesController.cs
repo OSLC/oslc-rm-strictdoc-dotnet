@@ -6,11 +6,13 @@ using StrictDocOslcRm.Services;
 namespace StrictDocOslcRm.Controllers;
 
 [ApiController]
+[Route("/rootservices")]
 [Route("/.well-known/oslc/rootservices.xml")]
 public class RootServicesController(
     ILogger<RootServicesController> logger,
     IBaseUrlService baseUrlService,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration
+) : ControllerBase
 {
     [HttpGet]
     [Produces("application/rdf+xml")]
@@ -20,7 +22,10 @@ public class RootServicesController(
         var appName = "OSLC RM for StrictDoc";
         var baseUrl = baseUrlService.GetBaseUrl();
         var escapedBaseUrl = WebUtility.HtmlEncode(baseUrl);
-        var serviceTitle = WebUtility.HtmlEncode(configuration["OSLC:ServiceTitle"] ?? "OSLC Requirements Management server for StrictDoc");
+        var serviceTitle = WebUtility.HtmlEncode(
+            configuration["OSLC:ServiceTitle"]
+                ?? "OSLC Requirements Management server for StrictDoc"
+        );
 
         var oauthRequestConsumerKeyUrl = $"{baseUrl}/oauth/request_consumer_key";
         var oauthApprovalModuleUrl = $"{baseUrl}/oauth/approve_consumer_key";
@@ -28,18 +33,28 @@ public class RootServicesController(
         var oauthUserAuthorizationUrl = $"{baseUrl}/oauth/authorize";
         var oauthAccessTokenUrl = $"{baseUrl}/oauth/access_token";
 
+        // REVISIT: Keep the nested Configuration catalog disabled until Jazz can
+        // consume repeated jd:oslcCatalogs members; cmServiceProviders alone works.
+        /*
+                    <oslc:ServiceProviderCatalog rdf:about="{{escapedBaseUrl}}/oslc_config/catalog">
+                        <oslc:domain rdf:resource="http://open-services.net/ns/config#" />
+                    </oslc:ServiceProviderCatalog>
+        */
         var rootServicesBody = $$"""
             <?xml version="1.0" encoding="UTF-8"?>
             <rdf:Description
                     xmlns:oslc_rm="http://open-services.net/xmlns/rm/1.0/"
+                    xmlns:oslc_config="http://open-services.net/ns/config#"
                     xmlns:oslc="http://open-services.net/ns/core#"
-                    xmlns:dc="http://purl.org/dc/terms/"
+                    xmlns:dcterms="http://purl.org/dc/terms/"
                     xmlns:jfs="http://jazz.net/xmlns/prod/jazz/jfs/1.0/"
                     xmlns:jd="http://jazz.net/xmlns/prod/jazz/discovery/1.0/"
                     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
                     rdf:about="{{escapedBaseUrl}}/.well-known/oslc/rootservices.xml">
-                <dc:title>{{serviceTitle}}</dc:title>
+                <dcterms:title>{{serviceTitle}}</dcterms:title>
+                <oslc:publisher rdf:resource="{{escapedBaseUrl}}/application-about" />
                 <oslc_rm:rmServiceProviders rdf:resource="{{escapedBaseUrl}}/oslc/catalog" />
+                <oslc_config:cmServiceProviders rdf:resource="{{escapedBaseUrl}}/oslc_config/catalog" />
                 <jd:oslcCatalogs>
                     <oslc:ServiceProviderCatalog rdf:about="{{escapedBaseUrl}}/oslc/catalog">
                         <oslc:domain rdf:resource="http://open-services.net/ns/rm#" />

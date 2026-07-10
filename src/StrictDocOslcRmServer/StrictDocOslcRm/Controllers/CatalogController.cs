@@ -14,7 +14,8 @@ namespace StrictDocOslcRm.Controllers;
 public class CatalogController(
     ILogger<CatalogController> logger,
     IBaseUrlService baseUrlService,
-    IStrictDocService strictDocService) : ControllerBase
+    IStrictDocService strictDocService,
+    IConfigurationContextService configurationContextService) : ControllerBase
 {
     [HttpGet]
     public async Task<OSLC4Net.Core.Model.ServiceProviderCatalog> Get()
@@ -28,7 +29,10 @@ public class CatalogController(
 
         try
         {
-            var documents = await strictDocService.GetDocumentsAsync();
+            var defaultContext = await configurationContextService
+                .GetDefaultAsync(HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+            var documents = await strictDocService.GetDocumentsAsync(defaultContext, HttpContext.RequestAborted);
 
             foreach (var document in documents)
             {

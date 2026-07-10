@@ -28,12 +28,9 @@ public class BaseUrlService : IBaseUrlService
     public string GetBaseUrl()
     {
         // First, check if a public base URI is configured (for reverse proxy scenarios)
-        var configuredBaseUri = _configuration["OSLC:PublicBaseUri"];
-
-        if (!string.IsNullOrWhiteSpace(configuredBaseUri))
+        if (PublicBaseUri.TryGetConfigured(_configuration, out var configuredBaseUri))
         {
-            // Remove trailing slash for consistency
-            var baseUri = configuredBaseUri.TrimEnd('/');
+            var baseUri = configuredBaseUri.AbsoluteUri.TrimEnd('/');
             _logger.LogDebug("Using configured PublicBaseUri: {BaseUri}", baseUri);
             return baseUri;
         }

@@ -1,0 +1,11 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://strictdoc.example/oslc_config/configurations/main/HEAD> <http://open-services.net/ns/config#acceptedBy> <http://open-services.net/ns/config#Configuration>;
+                                                                 <http://open-services.net/ns/config#component> <https://strictdoc.example/oslc_config/components/strictdoc>;
+                                                                 <http://open-services.net/ns/core#serviceProvider> <https://strictdoc.example/oslc_config/service_provider>;
+                                                                 <http://open-services.net/ns/core#shortId> "main/HEAD";
+                                                                 <http://purl.org/dc/terms/identifier> "main/HEAD";
+                                                                 <http://purl.org/dc/terms/title> "StrictDoc main stream"^^rdf:XMLLiteral;
+                                                                 a <http://open-services.net/ns/config#Configuration>.

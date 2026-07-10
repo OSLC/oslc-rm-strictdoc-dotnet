@@ -17,7 +17,8 @@ public class RequirementController(
     ILogger<RequirementController> logger,
     IBaseUrlService baseUrlService,
     IStrictDocService strictDocService,
-    ILinkSidecarService linkSidecarService) : Controller
+    ILinkSidecarService linkSidecarService,
+    IConfigurationContextService configurationContextService) : Controller
 {
     /// <summary>
     /// Unified endpoint for requirement resources, compact resources, and HTML previews.
@@ -36,7 +37,22 @@ public class RequirementController(
         }
 
         var baseUrl = baseUrlService.GetBaseUrl();
-        var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);
+        ConfigurationContext context;
+        try
+        {
+            context = await configurationContextService
+                .ResolveAsync(Request, baseUrl, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+
+        Response.Headers.Append("Vary", "Configuration-Context");
+        var allRequirements = await strictDocService
+            .GetAllRequirementsAsync(context, baseUrl, HttpContext.RequestAborted)
+            .ConfigureAwait(false);
         var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
 
         if (requirement == null)
@@ -155,7 +171,7 @@ public class RequirementController(
         // Handle regular Requirement resource request
         requirement.SetAbout(new Uri(requirementUri));
         requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
-        await linkSidecarService.ApplyLinksAsync(requirement, new Uri(requirementUri), HttpContext.RequestAborted)
+        await linkSidecarService.ApplyLinksAsync(context, requirement, new Uri(requirementUri), HttpContext.RequestAborted)
             .ConfigureAwait(false);
 
         // Add Link header for Compact resource (OSLC Resource Preview spec)
@@ -177,7 +193,27 @@ public class RequirementController(
         }
 
         var baseUrl = baseUrlService.GetBaseUrl();
-        var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl).ConfigureAwait(false);
+        ConfigurationContext context;
+        try
+        {
+            context = await configurationContextService
+                .ResolveAsync(Request, baseUrl, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+
+        if (!context.IsMutable)
+        {
+            return Conflict($"Configuration '{context.Identifier}' is immutable; requirement PUT is allowed only for HEAD contexts.");
+        }
+
+        Response.Headers.Append("Vary", "Configuration-Context");
+        var allRequirements = await strictDocService
+            .GetAllRequirementsAsync(context, baseUrl, HttpContext.RequestAborted)
+            .ConfigureAwait(false);
         var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
 
         if (requirement == null)
@@ -194,6 +230,7 @@ public class RequirementController(
         {
             await linkSidecarService
                 .ReplaceLinksAsync(
+                    context,
                     requirementUri,
                     Request.ContentType,
                     body,
@@ -219,7 +256,7 @@ public class RequirementController(
         // return NoContent();
         requirement.SetAbout(requirementUri);
         requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
-        await linkSidecarService.ApplyLinksAsync(requirement, requirementUri, HttpContext.RequestAborted)
+        await linkSidecarService.ApplyLinksAsync(context, requirement, requirementUri, HttpContext.RequestAborted)
             .ConfigureAwait(false);
 
         return Ok(requirement);

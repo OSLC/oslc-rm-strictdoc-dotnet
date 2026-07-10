@@ -5,171 +5,197 @@ using StrictDocOslcRm.Models;
 
 namespace StrictDocOslcRm.Services;
 
-/// <summary>
-/// Service for loading and parsing StrictDoc JSON data
-/// </summary>
 public interface IStrictDocService
 {
-    Task<List<StrictDocDocument>> GetDocumentsAsync();
-    Task<Requirement?> GetRequirementByUidAsync(string uid);
-    Task<List<Requirement>> GetRequirementsForDocumentAsync(string documentMid, string? baseUrl = null);
-    Task<List<Requirement>> GetAllRequirementsAsync(string? baseUrl = null);
+    Task<List<StrictDocDocument>> GetDocumentsAsync(
+        ConfigurationContext context,
+        CancellationToken cancellationToken = default);
+
+    Task<Requirement?> GetRequirementByUidAsync(
+        string uid,
+        ConfigurationContext context,
+        string? baseUrl = null,
+        CancellationToken cancellationToken = default);
+
+    Task<List<Requirement>> GetRequirementsForDocumentAsync(
+        string documentMid,
+        ConfigurationContext context,
+        string? baseUrl = null,
+        CancellationToken cancellationToken = default);
+
+    Task<List<Requirement>> GetAllRequirementsAsync(
+        ConfigurationContext context,
+        string? baseUrl = null,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Implementation of IStrictDocService with caching
+/// Loads StrictDoc snapshots from the selected local OSLC configuration context.
 /// </summary>
-public class StrictDocService : IStrictDocService
+public sealed class StrictDocService(IMemoryCache cache, ILogger<StrictDocService> logger)
+    : IStrictDocService
 {
-    private readonly IMemoryCache _cache;
-    private readonly ILogger<StrictDocService> _logger;
-    private readonly string _jsonFilePath;
-    private const string DocumentsCacheKey = "strictdoc_documents";
-    private const string RequirementsCacheKey = "strictdoc_requirements";
-    private const string RequirementByUidCachePrefix = "strictdoc_req_";
-
-    public StrictDocService(IMemoryCache cache, ILogger<StrictDocService> logger, IConfiguration configuration)
+    public async Task<List<StrictDocDocument>> GetDocumentsAsync(
+        ConfigurationContext context,
+        CancellationToken cancellationToken = default)
     {
-        _cache = cache;
-        _logger = logger;
-        _jsonFilePath = configuration["StrictDoc:JsonFilePath"] ?? throw new ArgumentNullException(nameof(configuration), "StrictDoc:JsonFilePath configuration is required");
-    }
-
-    public async Task<List<StrictDocDocument>> GetDocumentsAsync()
-    {
-        if (_cache.TryGetValue(DocumentsCacheKey, out List<StrictDocDocument>? cachedDocuments))
+        var cacheKey = $"strictdoc_documents_{context.Identifier}_{GetSnapshotVersion(context)}";
+        if (cache.TryGetValue(cacheKey, out List<StrictDocDocument>? cachedDocuments))
         {
             return cachedDocuments!;
         }
 
-        var documents = await LoadDocumentsFromFileAsync().ConfigureAwait(false);
-        _cache.Set(DocumentsCacheKey, documents, TimeSpan.FromHours(1));
+        var documents = await LoadDocumentsFromFileAsync(context, cancellationToken).ConfigureAwait(false);
+        cache.Set(cacheKey, documents, TimeSpan.FromMinutes(5));
         return documents;
     }
 
-    public async Task<Requirement?> GetRequirementByUidAsync(string uid)
+    public async Task<Requirement?> GetRequirementByUidAsync(
+        string uid,
+        ConfigurationContext context,
+        string? baseUrl = null,
+        CancellationToken cancellationToken = default)
     {
-        var cacheKey = RequirementByUidCachePrefix + uid;
-
-        if (_cache.TryGetValue(cacheKey, out Requirement? cachedRequirement))
+        var cacheKey = $"strictdoc_requirement_{context.Identifier}_{GetSnapshotVersion(context)}_{baseUrl}_{uid}";
+        if (cache.TryGetValue(cacheKey, out Requirement? cachedRequirement))
         {
             return cachedRequirement;
         }
 
-        // Check if we have negative cache (requirement doesn't exist)
-        var negativeCacheKey = cacheKey + "_negative";
-        if (_cache.TryGetValue(negativeCacheKey, out _))
+        var requirement = (await GetAllRequirementsAsync(context, baseUrl, cancellationToken).ConfigureAwait(false))
+            .FirstOrDefault(candidate => string.Equals(candidate.Identifier, uid, StringComparison.Ordinal));
+        if (requirement is not null)
         {
-            return null;
-        }
-
-        var requirements = await GetAllRequirementsAsync().ConfigureAwait(false);
-        var requirement = requirements.FirstOrDefault(r => string.Equals(r.Identifier, uid, StringComparison.Ordinal));
-
-        if (requirement != null)
-        {
-            _cache.Set(cacheKey, requirement, TimeSpan.FromHours(1));
-        }
-        else
-        {
-            // Negative caching - cache the fact that this UID doesn't exist
-            _cache.Set(negativeCacheKey, true, TimeSpan.FromMinutes(30));
+            cache.Set(cacheKey, requirement, TimeSpan.FromMinutes(5));
         }
 
         return requirement;
     }
 
-    public async Task<List<Requirement>> GetRequirementsForDocumentAsync(string documentMid, string? baseUrl = null)
+    public async Task<List<Requirement>> GetRequirementsForDocumentAsync(
+        string documentMid,
+        ConfigurationContext context,
+        string? baseUrl = null,
+        CancellationToken cancellationToken = default)
     {
-        var documents = await GetDocumentsAsync().ConfigureAwait(false);
-        var targetDocument = documents.FirstOrDefault(d => string.Equals(d.Mid, documentMid, StringComparison.Ordinal));
+        var documents = await GetDocumentsAsync(context, cancellationToken).ConfigureAwait(false);
+        var targetDocument = documents.FirstOrDefault(document =>
+            string.Equals(document.Mid, documentMid, StringComparison.Ordinal));
 
-        if (targetDocument == null)
+        if (targetDocument is null)
         {
-            _logger.LogWarning("Document with MID {DocumentMid} not found", documentMid);
-            return new List<Requirement>();
+            logger.LogWarning(
+                "Document with MID {DocumentMid} was not found in configuration {Configuration}",
+                documentMid,
+                context.Identifier);
+            return [];
         }
 
-        // Extract requirements only from this specific document
-        var requirements = ExtractRequirementsFromNodes(targetDocument.Nodes, targetDocument.Mid, targetDocument.Title, baseUrl);
-        _logger.LogInformation("Found {Count} requirements for document {DocumentMid} ({Title})",
-            requirements.Count, documentMid, targetDocument.Title);
-
+        var requirements = ExtractRequirementsFromNodes(
+            targetDocument.Nodes,
+            targetDocument.Mid,
+            targetDocument.Title,
+            baseUrl);
+        logger.LogInformation(
+            "Found {Count} requirements for document {DocumentMid} in configuration {Configuration}",
+            requirements.Count,
+            documentMid,
+            context.Identifier);
         return requirements;
     }
 
-    public async Task<List<Requirement>> GetAllRequirementsAsync(string? baseUrl = null)
+    public async Task<List<Requirement>> GetAllRequirementsAsync(
+        ConfigurationContext context,
+        string? baseUrl = null,
+        CancellationToken cancellationToken = default)
     {
-        var cacheKey = RequirementsCacheKey + (baseUrl != null ? $"_{StringComparer.Ordinal.GetHashCode(baseUrl)}" : "");
-
-        if (_cache.TryGetValue(cacheKey, out List<Requirement>? cachedRequirements))
+        var cacheKey = $"strictdoc_requirements_{context.Identifier}_{GetSnapshotVersion(context)}_{baseUrl}";
+        if (cache.TryGetValue(cacheKey, out List<Requirement>? cachedRequirements))
         {
             return cachedRequirements!;
         }
 
-        var documents = await GetDocumentsAsync().ConfigureAwait(false);
+        var documents = await GetDocumentsAsync(context, cancellationToken).ConfigureAwait(false);
         var requirements = new List<Requirement>();
-
         foreach (var document in documents)
         {
-            var docRequirements = ExtractRequirementsFromNodes(document.Nodes, document.Mid, document.Title, baseUrl);
-            requirements.AddRange(docRequirements);
+            requirements.AddRange(ExtractRequirementsFromNodes(
+                document.Nodes,
+                document.Mid,
+                document.Title,
+                baseUrl));
         }
 
-        _cache.Set(cacheKey, requirements, TimeSpan.FromHours(1));
+        cache.Set(cacheKey, requirements, TimeSpan.FromMinutes(5));
         return requirements;
     }
 
-    private async Task<List<StrictDocDocument>> LoadDocumentsFromFileAsync()
+    private static long GetSnapshotVersion(ConfigurationContext context) =>
+        File.Exists(context.StrictDocPath)
+            ? File.GetLastWriteTimeUtc(context.StrictDocPath).Ticks
+            : 0;
+
+    private async Task<List<StrictDocDocument>> LoadDocumentsFromFileAsync(
+        ConfigurationContext context,
+        CancellationToken cancellationToken)
     {
         try
         {
-            if (!File.Exists(_jsonFilePath))
+            if (!File.Exists(context.StrictDocPath))
             {
-                _logger.LogWarning("StrictDoc JSON file not found at {FilePath}", _jsonFilePath);
-                return new List<StrictDocDocument>();
+                logger.LogWarning(
+                    "StrictDoc JSON snapshot was not found at {FilePath} for configuration {Configuration}",
+                    context.StrictDocPath,
+                    context.Identifier);
+                return [];
             }
 
-            var jsonContent = await File.ReadAllTextAsync(_jsonFilePath).ConfigureAwait(false);
-            var options = new JsonSerializerOptions
+            var jsonContent = await File.ReadAllTextAsync(context.StrictDocPath, cancellationToken)
+                .ConfigureAwait(false);
+            var strictDocData = JsonSerializer.Deserialize<StrictDocData>(jsonContent, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            };
-
-            var strictDocData = JsonSerializer.Deserialize<StrictDocData>(jsonContent, options);
-            return strictDocData?.Documents ?? new List<StrictDocDocument>();
+            });
+            return strictDocData?.Documents ?? [];
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            _logger.LogError(ex, "Error loading StrictDoc data from {FilePath}", _jsonFilePath);
-            return new List<StrictDocDocument>();
+            logger.LogError(
+                exception,
+                "Error loading StrictDoc JSON snapshot from {FilePath} for configuration {Configuration}",
+                context.StrictDocPath,
+                context.Identifier);
+            return [];
         }
     }
 
-    private List<Requirement> ExtractRequirementsFromNodes(List<StrictDocNode> nodes, string documentMid, string documentTitle, string? baseUrl = null)
+    private List<Requirement> ExtractRequirementsFromNodes(
+        List<StrictDocNode> nodes,
+        string documentMid,
+        string documentTitle,
+        string? baseUrl = null)
     {
+        _ = documentMid;
+        _ = documentTitle;
         var requirements = new List<Requirement>();
 
         foreach (var node in nodes)
         {
-            if (string.Equals(node.NodeType, StrictDocNodeTypes.Requirement, StringComparison.Ordinal) && !string.IsNullOrEmpty(node.Uid))
+            if (string.Equals(node.NodeType, StrictDocNodeTypes.Requirement, StringComparison.Ordinal) &&
+                !string.IsNullOrEmpty(node.Uid))
             {
-                var requirement = CreateRequirementFromNode(node, baseUrl);
-                requirements.Add(requirement);
+                requirements.Add(CreateRequirementFromNode(node, baseUrl));
             }
             else if (string.Equals(node.NodeType, StrictDocNodeTypes.CompositeRequirement, StringComparison.Ordinal))
             {
-                // REVISIT: Map StrictDoc composite requirements to OSLC RM
-                // RequirementCollection resources instead of silently omitting them.
-                // TODO: Implement RequirementCollection mapping
-                _logger.LogInformation("Composite requirement found but not yet implemented: {Title}", node.Title);
+                // REVISIT: Map StrictDoc composite requirements to OSLC RM RequirementCollection
+                // resources when the server publishes collection identities and membership semantics.
+                logger.LogInformation("Composite requirement found but not yet mapped: {Title}", node.Title);
             }
 
-            // Recursively process child nodes
-            if (node.Nodes != null)
+            if (node.Nodes is not null)
             {
-                var childRequirements = ExtractRequirementsFromNodes(node.Nodes, documentMid, documentTitle, baseUrl);
-                requirements.AddRange(childRequirements);
+                requirements.AddRange(ExtractRequirementsFromNodes(node.Nodes, documentMid, documentTitle, baseUrl));
             }
         }
 
@@ -178,48 +204,28 @@ public class StrictDocService : IStrictDocService
 
     private static Requirement CreateRequirementFromNode(StrictDocNode node, string? baseUrl = null)
     {
-        var requirement = new Requirement();
-
-        // Map UID to Identifier and URI
-        requirement.Identifier = node.Uid ?? throw new InvalidOperationException("Node UID is required for requirement mapping");
-
-        // Map TITLE to Title
-        requirement.Title = node.Title ?? "No Title";
-
-        // Map STATEMENT to Description
-        requirement.Description = node.Statement ?? "No Description";
+        var requirement = new Requirement
+        {
+            Identifier = node.Uid ?? throw new InvalidOperationException("Node UID is required for requirement mapping"),
+            Title = node.Title ?? "No Title",
+            Description = node.Statement ?? "No Description"
+        };
 
         if (!string.IsNullOrEmpty(baseUrl))
         {
             requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
         }
 
-        // Process RELATIONS with type PARENT to Decomposes property
-        if (node.Relations != null)
+        if (node.Relations is not null)
         {
-            var parentRelations = node.Relations
-                .Where(r => r.Type.Equals(StrictDocRelationTypes.Parent, StringComparison.OrdinalIgnoreCase))
-                .Select(r => r.Value)
-                .Where(v => !string.IsNullOrEmpty(v))
-                .ToList();
-
-            if (parentRelations.Any())
+            var decomposes = node.Relations
+                .Where(relation => relation.Type.Equals(StrictDocRelationTypes.Parent, StringComparison.OrdinalIgnoreCase))
+                .Select(relation => relation.Value)
+                .Where(value => !string.IsNullOrEmpty(value))
+                .Select(parentUid => new Uri($"{baseUrl ?? "http://strictdoc.local"}/?a={parentUid}"))
+                .ToArray();
+            if (decomposes.Length > 0)
             {
-                // Set Decomposes property with parent requirement URIs using new format
-                var decomposes = parentRelations
-                    .Select(parentUid =>
-                    {
-                        if (!string.IsNullOrEmpty(baseUrl))
-                        {
-                            return new Uri($"{baseUrl}/?a={parentUid}");
-                        }
-                        else
-                        {
-                            // Fallback to old format if baseUrl not provided
-                            return new Uri($"http://strictdoc.local/?a={parentUid}");
-                        }
-                    })
-                    .ToArray();
                 requirement.Decomposes = [.. decomposes];
             }
         }

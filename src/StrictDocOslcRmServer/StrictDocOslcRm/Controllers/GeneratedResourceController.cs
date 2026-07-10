@@ -8,7 +8,8 @@ namespace StrictDocOslcRm.Controllers;
 [Produces("application/n-triples")]
 public class GeneratedResourceController(
     IBaseUrlService baseUrlService,
-    ILinkSidecarService linkSidecarService) : ControllerBase
+    ILinkSidecarService linkSidecarService,
+    IConfigurationContextService configurationContextService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get(string id)
@@ -18,9 +19,22 @@ public class GeneratedResourceController(
             return BadRequest("Generated resource id is required.");
         }
 
-        var resourceUri = new Uri($"{baseUrlService.GetBaseUrl()}/.well-known/genid/{Uri.EscapeDataString(id)}");
+        var baseUrl = baseUrlService.GetBaseUrl();
+        ConfigurationContext context;
+        try
+        {
+            context = await configurationContextService
+                .ResolveAsync(Request, baseUrl, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+
+        var resourceUri = new Uri($"{baseUrl}/.well-known/genid/{Uri.EscapeDataString(id)}");
         var ntriples = await linkSidecarService
-            .GetResourceNTriplesAsync(resourceUri, HttpContext.RequestAborted)
+            .GetResourceNTriplesAsync(context, resourceUri, HttpContext.RequestAborted)
             .ConfigureAwait(false);
 
         return ntriples == null

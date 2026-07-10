@@ -16,13 +16,26 @@ public class ServiceProviderController(
     ILogger<ServiceProviderController> logger,
     IBaseUrlService baseUrlService,
     IStrictDocService strictDocService,
-    IOslcQueryService oslcQueryService) : Controller
+    IOslcQueryService oslcQueryService,
+    IConfigurationContextService configurationContextService,
+    ILinkSidecarService linkSidecarService) : Controller
 {
     [HttpGet]
     [Route("{documentMid}")]
     public async Task<ActionResult<OSLC4Net.Core.Model.ServiceProvider>> Get(string documentMid)
     {
-        var documents = await strictDocService.GetDocumentsAsync();
+        ConfigurationContext defaultContext;
+        try
+        {
+            defaultContext = await configurationContextService.GetDefaultAsync(HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return Problem(exception.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
+        var documents = await strictDocService.GetDocumentsAsync(defaultContext, HttpContext.RequestAborted);
         var document = documents.FirstOrDefault(d => string.Equals(d.Mid, documentMid, StringComparison.Ordinal));
 
         if (document == null)
@@ -84,13 +97,29 @@ public class ServiceProviderController(
     {
         var baseUrl = baseUrlService.GetBaseUrl();
 
-        var documents = await strictDocService.GetDocumentsAsync();
+        ConfigurationContext context;
+        try
+        {
+            context = await configurationContextService
+                .ResolveAsync(Request, baseUrl, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+
+        Response.Headers.Append("Vary", "Configuration-Context");
+
+        var documents = await strictDocService.GetDocumentsAsync(context, HttpContext.RequestAborted);
         if (documents.All(d => !string.Equals(d.Mid, documentMid, StringComparison.Ordinal)))
         {
             return NotFound($"Document with MID '{documentMid}' not found.");
         }
 
-        var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
+        var requirements = await strictDocService
+            .GetRequirementsForDocumentAsync(documentMid, context, baseUrl, HttpContext.RequestAborted)
+            .ConfigureAwait(false);
 
         // Set the About URI for each requirement using new format
         foreach (var requirement in requirements)
@@ -99,6 +128,9 @@ public class ServiceProviderController(
             {
                 requirement.SetAbout(new Uri($"{baseUrl}/?a={requirement.Identifier}"));
                 requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
+                await linkSidecarService
+                    .ApplyLinksAsync(context, requirement, requirement.GetAbout(), HttpContext.RequestAborted)
+                    .ConfigureAwait(false);
             }
         }
 
@@ -163,7 +195,22 @@ public class ServiceProviderController(
     public async Task<ActionResult<Requirement>> GetRequirement(string documentMid,
         string requirementUid)
     {
-        var requirement = await strictDocService.GetRequirementByUidAsync(requirementUid);
+        var baseUrl = baseUrlService.GetBaseUrl();
+        ConfigurationContext context;
+        try
+        {
+            context = await configurationContextService
+                .ResolveAsync(Request, baseUrl, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+
+        var requirement = await strictDocService
+            .GetRequirementByUidAsync(requirementUid, context, baseUrl, HttpContext.RequestAborted)
+            .ConfigureAwait(false);
 
         if (requirement == null)
         {
@@ -171,9 +218,10 @@ public class ServiceProviderController(
         }
 
         // Set the About URI using new format
-        var baseUrl = baseUrlService.GetBaseUrl();
         requirement.SetAbout(new Uri($"{baseUrl}/?a={requirementUid}"));
         requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
+        await linkSidecarService.ApplyLinksAsync(context, requirement, requirement.GetAbout(), HttpContext.RequestAborted);
+        Response.Headers.Append("Vary", "Configuration-Context");
 
         return Ok(requirement);
     }
@@ -191,9 +239,21 @@ public class ServiceProviderController(
         var baseUrl = baseUrlService.GetBaseUrl();
         var selectorUri = $"{baseUrl}/oslc/service_provider/{documentMid}/requirements/selector";
 
+        ConfigurationContext context;
+        try
+        {
+            context = await configurationContextService
+                .ResolveAsync(Request, baseUrl, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+
         // Load all requirements (reuse same sourcing logic as GetRequirements)
         var requirements =
-            await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
+            await strictDocService.GetRequirementsForDocumentAsync(documentMid, context, baseUrl, HttpContext.RequestAborted);
         foreach (var r in requirements)
         {
             if (!string.IsNullOrEmpty(r.Identifier))

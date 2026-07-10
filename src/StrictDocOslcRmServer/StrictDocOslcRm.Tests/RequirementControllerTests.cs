@@ -15,16 +15,24 @@ public class RequirementControllerTests : IAsyncDisposable
     private readonly IStrictDocService _strictDocService;
     private readonly IBaseUrlService _baseUrlService;
     private readonly ILinkSidecarService _linkSidecarService;
+    private readonly IConfigurationContextService _configurationContextService;
     private readonly ILogger<RequirementController> _logger;
+    private readonly ConfigurationContext _context = new("main", "HEAD", Path.GetTempPath());
 
     public RequirementControllerTests()
     {
         _strictDocService = Substitute.For<IStrictDocService>();
         _baseUrlService = Substitute.For<IBaseUrlService>();
         _linkSidecarService = Substitute.For<ILinkSidecarService>();
+        _configurationContextService = Substitute.For<IConfigurationContextService>();
         _logger = Substitute.For<ILogger<RequirementController>>();
 
-        _controller = new RequirementController(_logger, _baseUrlService, _strictDocService, _linkSidecarService);
+        _controller = new RequirementController(
+            _logger,
+            _baseUrlService,
+            _strictDocService,
+            _linkSidecarService,
+            _configurationContextService);
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -51,6 +59,9 @@ public class RequirementControllerTests : IAsyncDisposable
         var uid = "REQ-001";
         var baseUrl = "http://localhost:8080";
         _baseUrlService.GetBaseUrl().Returns(baseUrl);
+        _configurationContextService
+            .ResolveAsync(Arg.Any<HttpRequest>(), baseUrl, Arg.Any<CancellationToken>())
+            .Returns(_context);
 
         var requirement = new Requirement
         {
@@ -58,7 +69,8 @@ public class RequirementControllerTests : IAsyncDisposable
             Title = "Test Requirement",
             Description = "This is a test requirement"
         };
-        _strictDocService.GetAllRequirementsAsync(baseUrl).Returns(new List<Requirement> { requirement });
+        _strictDocService.GetAllRequirementsAsync(_context, baseUrl, Arg.Any<CancellationToken>())
+            .Returns(new List<Requirement> { requirement });
 
         // Act
         var result = await _controller.GetRequirementResource(uid, null, null).ConfigureAwait(false);
@@ -90,7 +102,10 @@ public class RequirementControllerTests : IAsyncDisposable
                    """;
 
         _baseUrlService.GetBaseUrl().Returns(baseUrl);
-        _strictDocService.GetAllRequirementsAsync(baseUrl).Returns(new List<Requirement>
+        _configurationContextService
+            .ResolveAsync(Arg.Any<HttpRequest>(), baseUrl, Arg.Any<CancellationToken>())
+            .Returns(_context);
+        _strictDocService.GetAllRequirementsAsync(_context, baseUrl, Arg.Any<CancellationToken>()).Returns(new List<Requirement>
         {
             new()
             {
@@ -111,14 +126,39 @@ public class RequirementControllerTests : IAsyncDisposable
         var returnedRequirement = okResult?.Value as Requirement;
         await Assert.That(returnedRequirement?.InstanceShape).IsEqualTo(new Uri($"{baseUrl}/oslc/shapes/requirement"));
         await _linkSidecarService.Received(1).ReplaceLinksAsync(
+            _context,
             new Uri($"{baseUrl}/?a={uid}"),
             "application/rdf+xml",
             body,
             new Uri(baseUrl),
             Arg.Any<CancellationToken>());
         await _linkSidecarService.Received(1).ApplyLinksAsync(
+            _context,
             Arg.Is<Requirement>(requirement => requirement.Identifier == uid),
             new Uri($"{baseUrl}/?a={uid}"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Test]
+    public async Task PutRequirementResource_RejectsImmutableConfigurationBeforeReadingTheRequestBody()
+    {
+        const string uid = "REQ-001";
+        const string baseUrl = "http://localhost:8080";
+        var baseline = new ConfigurationContext("main", "v0.1.0", Path.GetTempPath());
+        _baseUrlService.GetBaseUrl().Returns(baseUrl);
+        _configurationContextService
+            .ResolveAsync(Arg.Any<HttpRequest>(), baseUrl, Arg.Any<CancellationToken>())
+            .Returns(baseline);
+
+        var result = await _controller.PutRequirementResource(uid);
+
+        await Assert.That(result).IsTypeOf<ConflictObjectResult>();
+        await _linkSidecarService.DidNotReceive().ReplaceLinksAsync(
+            Arg.Any<ConfigurationContext>(),
+            Arg.Any<Uri>(),
+            Arg.Any<string?>(),
+            Arg.Any<string>(),
+            Arg.Any<Uri>(),
             Arg.Any<CancellationToken>());
     }
 }

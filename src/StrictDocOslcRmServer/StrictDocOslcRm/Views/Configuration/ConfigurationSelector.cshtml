@@ -1,0 +1,44 @@
+@model StrictDocOslcRm.Models.ConfigurationSelectionViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StrictDoc Configuration Selection</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 1.5rem; color: #16221f; }
+        input { box-sizing: border-box; width: 100%; padding: .65rem; font: inherit; }
+        ul { padding: 0; list-style: none; }
+        li { border-top: 1px solid #ccd8d2; padding: .7rem 0; }
+        a { color: #006b5f; text-decoration: none; font-weight: 650; }
+        small { display: block; color: #4c5d57; margin-top: .15rem; }
+    </style>
+</head>
+<body>
+    <form method="get" action="@Model.SelectorUri">
+        <label for="terms">Search configurations</label>
+        <input id="terms" type="search" name="terms" value="@Model.Terms" autofocus />
+    </form>
+    <ul>
+    @foreach (var configuration in Model.Results)
+    {
+        <li>
+            <a href="@configuration.GetAbout()" onclick="return selectConfiguration(this, event)">@configuration.Title</a>
+            <small>@configuration.Identifier</small>
+        </li>
+    }
+    </ul>
+    <script>
+        function selectConfiguration(target, event) {
+            window.parent.postMessage('oslc-response:' + JSON.stringify({
+                'oslc:results': [{ 'oslc:label': target.text, 'rdf:resource': target.href }]
+            }), '*');
+            event.preventDefault();
+            return false;
+        }
+    </script>
+</body>
+</html>

@@ -82,6 +82,13 @@ first StrictDoc generic resource needs a small server-owned model or a generic
 resource representation rather than assuming that code generation has already
 provided a generic model.
 
+The initial implementation uses that server-owned generic model. Its Verify
+fixture confirms that OSLC4Net serializes a provider-owned Configuration with
+`rdf:type oslc_config:Configuration`, `component`, `serviceProvider`, and the
+heliple2-compatible `acceptedBy oslc_config:Configuration` marker. The domain
+package remains the source for the later subtype records, not a reason to
+invent a nonexistent generated `Configuration` record.
+
 The generated files are valuable for the later subtype phase because they make
 the resource-shape constraints visible in normal C# metadata. In particular:
 
@@ -165,6 +172,7 @@ least:
 ```text
 Stream:
   rdf:type              oslc_config:Stream
+  rdf:type              oslc_config:Configuration
   oslc_config:component componentUri
   oslc_config:branch    branchUri
   oslc_config:baselines baselinesContainerUri
@@ -172,11 +180,24 @@ Stream:
 
 Baseline:
   rdf:type                    oslc_config:Baseline
+  rdf:type                    oslc_config:Configuration
   oslc_config:component       componentUri
   oslc_config:baselineOfStream streamUri
   oslc_config:selections      selectionsUri
   oslc_config:streams         derivedStreamsContainerUri
 ```
+
+The CM shapes permit clients to infer the Configuration type and do not require
+servers to materialize it. StrictDoc should materialize it anyway in the
+subtype phase: live Jazz Baselines contained both explicit type triples, and
+the attached query client recognizes a Stream only by an explicit Stream type.
+With OSLC4Net, a concrete `Stream` or `Baseline` instance supplies its subtype
+automatically through `[OslcResourceShape]`; add
+`new Uri(Config.Configuration)` to its `Types` collection for the additional
+base-type triple. The serializer de-duplicates the subtype if it was also
+added manually. Test full representations and `oslc.select` projections,
+because the automatic class type and additional `Types` values follow
+different property-filtering paths.
 
 `baselineOfStream` is a single, read-only relation. `previousBaseline` is a
 history relation and must come from publication metadata, not from sorting

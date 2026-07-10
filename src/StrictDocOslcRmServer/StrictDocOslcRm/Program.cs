@@ -1,8 +1,34 @@
 using OSLC4Net.Server.Providers;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Trace;
 using StrictDocOslcRm.Middleware;
 using StrictDocOslcRm.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+});
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            tracing.SetSampler(new AlwaysOnSampler());
+        }
+
+        tracing.AddSource(builder.Environment.ApplicationName)
+            .AddAspNetCoreInstrumentation();
+    });
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+{
+    builder.Services.AddOpenTelemetry().UseOtlpExporter();
+}
 
 // REVISIT: Replace the toy OAuth1 provider with a production OAuth consumer
 // registry/token implementation, or delegate authentication to the deployment
@@ -36,6 +62,7 @@ builder.Services.AddScoped<IBaseUrlService, BaseUrlService>();
 // Register StrictDoc service
 builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 builder.Services.AddSingleton<ILinkSidecarService, FileLinkSidecarService>();
+builder.Services.AddSingleton<IConfigurationContextService, FileConfigurationContextService>();
 
 // Register OSLC Query evaluation service (oslc.where/select/orderBy/searchTerms/paging)
 builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
@@ -43,6 +70,19 @@ builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+
+if (PublicBaseUri.TryGetConfigured(builder.Configuration, out var publicBaseUri))
+{
+    app.Use((context, next) =>
+    {
+        // REVISIT: Replace request normalization when OSLC4Net accepts the configured
+        // public base URI directly; its formatter currently derives ResponseInfo and
+        // resource subjects from HttpRequest.GetEncodedUrl().
+        PublicBaseUri.ApplyTo(context.Request, publicBaseUri);
+        return next();
+    });
+}
+
 app.Use((context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/oslc") ||

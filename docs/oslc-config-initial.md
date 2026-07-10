@@ -105,7 +105,7 @@ These levels keep the implementation and the advertised Jazz metadata honest:
 
 | Level | What it provides | Jazz metadata | Status |
 |---|---|---|---|
-| Generic Configuration probe | Config discovery, generic Configuration query/picker, context-aware RM, and link-only `HEAD` writes | `globalConfigurationAware=yes` only if the Jazz probe confirms the limited heliple2-style flow | First implementation |
+| Generic Configuration probe | Config discovery, generic Configuration query/picker, context-aware RM, and link-only `HEAD` writes | `globalConfigurationAware=yes` is emitted as the heliple2-compatible Jazz probe setting; it is not evidence of subtype, TRS, or LDX support | Implemented locally; Jazz assessment pending |
 | Local subtype provider | Component, Stream, Baseline, Selections, VersionResources, containers, and immutable snapshots | Set only after subtype behaviour is verified | Follow-up implementation |
 | Indexed configuration linking | Owner-side TRS publication plus incoming-link discovery through LDX and LQE-compatible indexing | Link-index flags only after the corresponding services work | Extended design |
 
@@ -126,7 +126,56 @@ multi-component global configuration composition. A global configuration URI
 can still be accepted as an external context once a resolver can delegate its
 resolution to GCM or another provider.
 
-## Findings from the current StrictDoc server
+## Implemented initial slice
+
+The repository now implements the generic, heliple2-style Configuration
+Management probe. The seeded publication contexts are:
+
+```text
+/data/main/HEAD/strictdoc.json
+/data/main/HEAD/sidecar.json
+/data/main/v0.1.0/strictdoc.json
+/data/main/v0.1.0/sidecar.json
+/data/argicultural/HEAD/strictdoc.json
+/data/argicultural/HEAD/sidecar.json
+```
+
+The container mount maps `src/hellow-requirements/output` to `/data`; the
+development configuration uses that same directory directly. `main/HEAD` is
+the default context. A local configuration URI has the form
+`{base}/oslc_config/configurations/{branch}/{tag}`. The server validates both
+path segments, resolves the query parameter `oslc_config.context` before the
+`Configuration-Context` header, and refuses external configuration URIs.
+
+Implemented routes are `/rootservices` and its well-known alias, `/scr` and
+its legacy alias, `/application-about`, `/oslc_config/catalog`,
+`/oslc_config/service_provider`, `/oslc_config/components/strictdoc`, the
+configuration container/query/picker, and direct generic Configuration reads.
+Requirement GET, query, direct provider reads, picker loading, generated
+sidecar resource reads, and link-only PUT resolve the same context. Only
+`HEAD` contexts can mutate their sidecar; a baseline context returns a
+conflict before parsing or writing the incoming RDF.
+
+The generic Configuration representation deliberately contains only
+`rdf:type oslc_config:Configuration`, title/identifier metadata, component,
+service provider, and `acceptedBy oslc_config:Configuration`. It does not
+claim Stream, Baseline, Selections, VersionResource, TRS, LDX, or LQE support.
+The Config provider emits `jfs_proc:globalConfigurationAware="yes"` to permit
+the manual Jazz probe, following the successful limited heliple2@CM pattern.
+That flag must be reassessed after the probe; it does not make StrictDoc a
+global-configuration or link-index provider.
+
+The current implementation has TUnit coverage for context enumeration and
+precedence, immutable-sidecar rejection, and a Verify RDF snapshot for the
+generic Configuration graph. It does not yet emit ETags or enforce `If-Match`;
+those concurrency requirements remain the next hardening step before multiple
+Jazz clients are allowed to write the same stream.
+
+## Pre-implementation audit (historical)
+
+The following table describes the server before the implemented initial slice
+above. It is retained to explain the design deltas, not as a description of
+the current routes or data layout.
 
 The existing server has the following relevant surface:
 
@@ -529,7 +578,7 @@ to its existing RM and authentication entries:
 
 ```xml
 <oslc_rm:rmServiceProviders rdf:resource="{base}/oslc/catalog" />
-<cm:cmServiceProviders rdf:resource="{base}/oslc_config/catalog" />
+<oslc_config:cmServiceProviders rdf:resource="{base}/oslc_config/catalog" />
 <jd:oslcCatalogs>
   <oslc:ServiceProviderCatalog rdf:about="{base}/oslc/catalog">
     <oslc:domain rdf:resource="http://open-services.net/ns/rm#" />
@@ -540,12 +589,10 @@ to its existing RM and authentication entries:
 </jd:oslcCatalogs>
 ```
 
-Here `cm:cmServiceProviders` is the historical Jazz root-services predicate.
-The XML prefix is irrelevant; the expanded namespace URI must match the
-predicate used by the target Jazz version. The fetched Jazz guidance writes
-the example with an `oslc_config` prefix even though it is a root-services
-discovery property. Add an interoperability fixture from the target Jazz
-deployment and assert the expanded QName, not the prefix spelling.
+The current heliple2 CM branch uses the expanded
+`http://open-services.net/ns/config#cmServiceProviders` predicate. The XML
+prefix is irrelevant; StrictDoc emits `oslc_config` and tests should assert the
+expanded QName rather than a prefix spelling.
 
 When TRS publication is enabled, add the TRS discovery declaration required
 by the target Jazz/LQE deployment, for example a `trs:trackedResourceSet`
@@ -652,8 +699,8 @@ query/selection capability and the requirement shape. A single provider per
 document is acceptable for the first implementation; do not create a new
 provider for every branch or baseline.
 
-The stage-A provider may add the Jazz process property after the heliple2-style
-probe succeeds:
+StrictDoc currently adds the Jazz process property to make the heliple2-style
+manual probe possible:
 
 ```xml
 <jfs_proc:globalConfigurationAware
@@ -671,7 +718,7 @@ The first provider-owned URIs should be stable and opaque:
 ```text
 Component       {base}/oslc_config/components/{componentId}
 Configurations  {componentUri}/configurations
-Configuration   {base}/oslc_config/configurations/{configurationId}
+Configuration   {base}/oslc_config/configurations/{branch}/{tag}
 ```
 
 The identifier portions must be URI-escaped and must not be accepted as raw
@@ -715,11 +762,11 @@ extend this same handler polymorphically. The complete subtype graph,
 Selections, VersionResource, TRS, LDX, and LQE plan is in
 [oslc-config-extended.md](./oslc-config-extended.md).
 
-The component and configuration containers can be introduced in the first
-probe if Jazz requires them for discovery. If they are not needed by the
-observed flow, do not pretend they already satisfy the later subtype shape;
-record the result of the Jazz assessment and add the containers in the next
-phase.
+The initial server exposes a read-only component configuration container with
+`rdfs:member` links to the generic Configuration resources. It is a discovery
+container for the generic probe, not an assertion that the later Stream and
+Baseline LDPC shape is already complete. Record what Jazz actually requires
+from this container before extending it in the subtype phase.
 
 ## Deferred subtype graph
 
@@ -1112,6 +1159,12 @@ for the generic stage-A probe and must not be advertised by the initial server.
 
 
 ## REST API acceptance matrix
+
+This is the target matrix. The implemented generic slice covers discovery,
+generic Config resources, context resolution, and `HEAD`-only link persistence.
+Rows that require ETag/`If-Match`, complete query projection/paging, or
+context-preserving delegated RM picker posts remain hardening work for the
+manual Jazz assessment.
 
 The following is the minimum testable surface for the generic stage-A
 implementation. Subtype, VersionResource, TRS, LDX, and LQE endpoints are

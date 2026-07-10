@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using OSLC4Net.Domains.RequirementsManagement;
@@ -10,18 +9,29 @@ namespace StrictDocOslcRm.Tests;
 public class FileLinkSidecarServiceTests
 {
     [Test]
+    public async Task ReplaceLinksAsync_RejectsImmutableBaselineContext()
+    {
+        var service = new FileLinkSidecarService(Substitute.For<ILogger<FileLinkSidecarService>>());
+        var context = new ConfigurationContext("main", "v0.1.0", Path.GetTempPath());
+
+        var action = () => service.ReplaceLinksAsync(
+            context,
+            new Uri("https://strictdoc.example/?a=REQ-001"),
+            "text/turtle",
+            "<https://strictdoc.example/?a=REQ-001> <http://open-services.net/ns/rm#affectedBy> <https://jazz.example/workitem/1> .",
+            new Uri("https://strictdoc.example"));
+
+        await Assert.That(action).Throws<InvalidOperationException>();
+    }
+
+    [Test]
     public async Task ReplaceLinksAsync_StoresOnlyWritableSidecarGraphAndSkolemizesBlankNodes()
     {
         // Arrange
-        var storePath = Path.Combine(Path.GetTempPath(), "strictdoc-oslc-rm-tests", Guid.NewGuid().ToString("N"), "link-sidecars.json");
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["LinkSidecars:StorePath"] = storePath
-            })
-            .Build();
+        var dataDirectory = Path.Combine(Path.GetTempPath(), "strictdoc-oslc-rm-tests", Guid.NewGuid().ToString("N"));
+        var context = new ConfigurationContext("main", "HEAD", dataDirectory);
         var logger = Substitute.For<ILogger<FileLinkSidecarService>>();
-        var service = new FileLinkSidecarService(configuration, logger);
+        var service = new FileLinkSidecarService(logger);
         var resourceUri = new Uri("https://strictdoc-rm.oslc.ldsw.eu/?a=REQ-001");
         var publicBaseUri = new Uri("https://strictdoc-rm.oslc.ldsw.eu");
         var rdfXml = """
@@ -56,24 +66,24 @@ public class FileLinkSidecarServiceTests
                      """;
 
         // Act
-        await service.ReplaceLinksAsync(resourceUri, "application/rdf+xml", rdfXml, publicBaseUri);
+        await service.ReplaceLinksAsync(context, resourceUri, "application/rdf+xml", rdfXml, publicBaseUri);
 
-        var ntriples = await service.GetNTriplesAsync(resourceUri);
+        var ntriples = await service.GetNTriplesAsync(context, resourceUri);
         var requirement = new Requirement
         {
             Identifier = "REQ-001",
             Title = "Requirement",
             Description = "Requirement"
         };
-        await service.ApplyLinksAsync(requirement, resourceUri);
-        var namedLinkObjectNTriples = await service.GetResourceNTriplesAsync(
+        await service.ApplyLinksAsync(context, requirement, resourceUri);
+        var namedLinkObjectNTriples = await service.GetResourceNTriplesAsync(context,
             new Uri("https://strictdoc-rm.oslc.ldsw.eu/.well-known/genid/jazz-link-object-1"));
-        var namedReifiedNTriples = await service.GetResourceNTriplesAsync(
+        var namedReifiedNTriples = await service.GetResourceNTriplesAsync(context,
             new Uri("https://strictdoc-rm.oslc.ldsw.eu/.well-known/genid/jazz-reified-link-1"));
         var skolemUri = Regex.Match(
             ntriples!,
             @"https://strictdoc-rm\.oslc\.ldsw\.eu/\.well-known/genid/oslc_[0-9a-f]+").Value;
-        var skolemNTriples = await service.GetResourceNTriplesAsync(new Uri(skolemUri));
+        var skolemNTriples = await service.GetResourceNTriplesAsync(context, new Uri(skolemUri));
 
         // Assert
         await Assert.That(ntriples).IsNotNull();

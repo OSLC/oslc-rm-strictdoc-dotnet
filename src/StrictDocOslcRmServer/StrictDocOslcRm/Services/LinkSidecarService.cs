@@ -13,6 +13,7 @@ namespace StrictDocOslcRm.Services;
 public interface ILinkSidecarService
 {
     Task ReplaceLinksAsync(
+        ConfigurationContext context,
         Uri resourceUri,
         string? contentType,
         string rdfBody,
@@ -20,17 +21,23 @@ public interface ILinkSidecarService
         CancellationToken cancellationToken = default);
 
     Task ApplyLinksAsync(
+        ConfigurationContext context,
         Requirement requirement,
         Uri resourceUri,
         CancellationToken cancellationToken = default);
 
-    Task<string?> GetNTriplesAsync(Uri resourceUri, CancellationToken cancellationToken = default);
+    Task<string?> GetNTriplesAsync(
+        ConfigurationContext context,
+        Uri resourceUri,
+        CancellationToken cancellationToken = default);
 
-    Task<string?> GetResourceNTriplesAsync(Uri resourceUri, CancellationToken cancellationToken = default);
+    Task<string?> GetResourceNTriplesAsync(
+        ConfigurationContext context,
+        Uri resourceUri,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class FileLinkSidecarService(
-    IConfiguration configuration,
     ILogger<FileLinkSidecarService> logger) : ILinkSidecarService
 {
     private const string RdfValue = "http://www.w3.org/1999/02/22-rdf-syntax-ns#value";
@@ -54,16 +61,20 @@ public sealed class FileLinkSidecarService(
     ];
 
     private readonly SemaphoreSlim _lock = new(1, 1);
-    private readonly string _storePath = configuration["LinkSidecars:StorePath"]
-        ?? "/data/sidecars/link-sidecars.json";
-
     public async Task ReplaceLinksAsync(
+        ConfigurationContext context,
         Uri resourceUri,
         string? contentType,
         string rdfBody,
         Uri publicBaseUri,
         CancellationToken cancellationToken = default)
     {
+        if (!context.IsMutable)
+        {
+            throw new InvalidOperationException(
+                $"Configuration '{context.Identifier}' is immutable; sidecar links can only be changed in a HEAD context.");
+        }
+
         ArgumentNullException.ThrowIfNull(resourceUri);
         ArgumentNullException.ThrowIfNull(publicBaseUri);
 
@@ -79,7 +90,7 @@ public sealed class FileLinkSidecarService(
         await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var store = await LoadStoreAsync(cancellationToken).ConfigureAwait(false);
+            var store = await LoadStoreAsync(context.SidecarPath, cancellationToken).ConfigureAwait(false);
             var key = resourceUri.AbsoluteUri;
 
             if (sidecarGraph.Triples.Count == 0)
@@ -100,7 +111,7 @@ public sealed class FileLinkSidecarService(
                     resourceUri);
             }
 
-            await SaveStoreAsync(store, cancellationToken).ConfigureAwait(false);
+            await SaveStoreAsync(context.SidecarPath, store, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -109,6 +120,7 @@ public sealed class FileLinkSidecarService(
     }
 
     public async Task ApplyLinksAsync(
+        ConfigurationContext context,
         Requirement requirement,
         Uri resourceUri,
         CancellationToken cancellationToken = default)
@@ -116,7 +128,7 @@ public sealed class FileLinkSidecarService(
         ArgumentNullException.ThrowIfNull(requirement);
         ArgumentNullException.ThrowIfNull(resourceUri);
 
-        var ntriples = await GetNTriplesAsync(resourceUri, cancellationToken).ConfigureAwait(false);
+        var ntriples = await GetNTriplesAsync(context, resourceUri, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(ntriples))
         {
             return;
@@ -161,12 +173,15 @@ public sealed class FileLinkSidecarService(
         }
     }
 
-    public async Task<string?> GetNTriplesAsync(Uri resourceUri, CancellationToken cancellationToken = default)
+    public async Task<string?> GetNTriplesAsync(
+        ConfigurationContext context,
+        Uri resourceUri,
+        CancellationToken cancellationToken = default)
     {
         await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var store = await LoadStoreAsync(cancellationToken).ConfigureAwait(false);
+            var store = await LoadStoreAsync(context.SidecarPath, cancellationToken).ConfigureAwait(false);
             return store.TryGetValue(resourceUri.AbsoluteUri, out var entry) ? entry.NTriples : null;
         }
         finally
@@ -175,12 +190,15 @@ public sealed class FileLinkSidecarService(
         }
     }
 
-    public async Task<string?> GetResourceNTriplesAsync(Uri resourceUri, CancellationToken cancellationToken = default)
+    public async Task<string?> GetResourceNTriplesAsync(
+        ConfigurationContext context,
+        Uri resourceUri,
+        CancellationToken cancellationToken = default)
     {
         await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var store = await LoadStoreAsync(cancellationToken).ConfigureAwait(false);
+            var store = await LoadStoreAsync(context.SidecarPath, cancellationToken).ConfigureAwait(false);
             var result = new Graph { BaseUri = resourceUri };
 
             foreach (var entry in store.Values)
@@ -453,36 +471,39 @@ public sealed class FileLinkSidecarService(
                string.Equals(uriNode.Uri.AbsoluteUri, uri.AbsoluteUri, StringComparison.Ordinal);
     }
 
-    private async Task<Dictionary<string, LinkSidecarEntry>> LoadStoreAsync(CancellationToken cancellationToken)
+    private static async Task<Dictionary<string, LinkSidecarEntry>> LoadStoreAsync(
+        string storePath,
+        CancellationToken cancellationToken)
     {
-        if (!File.Exists(_storePath))
+        if (!File.Exists(storePath))
         {
             return [];
         }
 
-        await using var stream = File.OpenRead(_storePath);
+        await using var stream = File.OpenRead(storePath);
         return await JsonSerializer
             .DeserializeAsync<Dictionary<string, LinkSidecarEntry>>(stream, JsonOptions, cancellationToken)
             .ConfigureAwait(false) ?? [];
     }
 
-    private async Task SaveStoreAsync(
+    private static async Task SaveStoreAsync(
+        string storePath,
         Dictionary<string, LinkSidecarEntry> store,
         CancellationToken cancellationToken)
     {
-        var directory = Path.GetDirectoryName(_storePath);
+        var directory = Path.GetDirectoryName(storePath);
         if (!string.IsNullOrEmpty(directory))
         {
             Directory.CreateDirectory(directory);
         }
 
-        var tempPath = $"{_storePath}.tmp";
+        var tempPath = $"{storePath}.tmp";
         await using (var stream = File.Create(tempPath))
         {
             await JsonSerializer.SerializeAsync(stream, store, JsonOptions, cancellationToken).ConfigureAwait(false);
         }
 
-        File.Move(tempPath, _storePath, overwrite: true);
+        File.Move(tempPath, storePath, overwrite: true);
     }
 
     private sealed class LinkSidecarEntry

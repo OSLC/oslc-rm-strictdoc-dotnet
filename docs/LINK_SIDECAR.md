@@ -35,7 +35,17 @@ slice of the resource graph.
 
 ## Storage model
 
-The current implementation uses a file-backed JSON index for simplicity:
+The current implementation uses one file-backed JSON index **per published
+configuration context**:
+
+```text
+/data/{branch}/{tag}/sidecar.json
+```
+
+For example, a link saved under `main/HEAD` is stored in
+`/data/main/HEAD/sidecar.json`; it is never visible through
+`main/v0.1.0/sidecar.json` or `argicultural/HEAD/sidecar.json`. Only a `HEAD`
+context is writable. The JSON index has this shape:
 
 ```json
 {
@@ -84,11 +94,12 @@ title. Normalize those blank nodes into Skolem IRIs before persistence.
 Use the RDF-recognized `.well-known/genid` convention:
 
 ```text
-https://strictdoc-rm.oslc.ldsw.eu/.well-known/genid/oslc-sidecar/sha256-...
+https://strictdoc-rm.oslc.ldsw.eu/.well-known/genid/oslc_{sha256-hex}
 ```
 
-The Skolem IRI identifies an adapter-generated sidecar node. It does not need to
-be a useful deployment URL.
+The Skolem IRI identifies an adapter-generated sidecar node. The current server
+can dereference it through `/.well-known/genid/{id}` when the same configuration
+context is supplied.
 
 ## Write algorithm
 
@@ -102,8 +113,12 @@ For PUT/PATCH handling:
    nodes.
 6. Skolemize blank nodes into stable `.well-known/genid/...` IRIs.
 7. Serialize the extracted sidecar graph as N-Triples.
-8. Replace the SQLite row atomically.
-9. Increment the sidecar version.
+8. Replace the selected context’s JSON entry atomically.
+
+The current file-backed implementation records `UpdatedAt` but does not yet
+emit an ETag or enforce `If-Match`. Add a context-scoped sidecar version and
+conditional update before allowing concurrent Jazz clients to edit the same
+stream.
 
 The full GET representation is:
 
@@ -112,7 +127,7 @@ StrictDoc JSON-derived RDF graph
 + sidecar RDF graph for the exact resource URI
 ```
 
-The ETag should cover both parts, for example:
+The future ETag should cover both parts, for example:
 
 ```text
 hash(strictdoc_export_revision, resource_uri, sidecar_version)

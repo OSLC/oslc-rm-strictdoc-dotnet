@@ -4,6 +4,12 @@
       "Key": "jazz",
       "Secret": "jazzsecret",
       "Name": "IBM Jazz",
+      "Approved": true
+    },
+    {
+      "Key": "184f4fb6b985339d962c952ebd9ce12940df711a784434b7",
+      "Secret": "secret",
+      "Name": "jazz.tail7abc.ts.net:9443/jts",
       "Approved": false
     }
   ],

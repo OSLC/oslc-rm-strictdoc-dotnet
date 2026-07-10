@@ -1,0 +1,132 @@
+# Development guide
+
+## Local server
+
+Run the server from the application project:
+
+```sh
+cd src/StrictDocOslcRmServer/StrictDocOslcRm
+dotnet run
+```
+
+The development configuration accepts `localhost` and the developer's configured
+Tailscale MagicDNS name. Keep the real name in the local configuration only; do
+not add it to documentation, examples, commits, or issue reports.
+
+The server data root is `src/hellow-requirements/output`. The initial
+configuration-management snapshots are laid out as:
+
+```text
+{data-root}/main/HEAD/strictdoc.json
+{data-root}/main/HEAD/sidecar.json
+{data-root}/main/v0.1.0/strictdoc.json
+{data-root}/argicultural/HEAD/strictdoc.json
+```
+
+Run the test suite from the solution directory:
+
+```sh
+cd src/StrictDocOslcRmServer
+dotnet test --solution StrictDocOslcRm.slnx --no-restore
+```
+
+## Tailscale Serve debugging
+
+Use Tailscale Serve to make a locally running development server available to
+other devices in the tailnet. The examples deliberately use anonymized names:
+
+```sh
+tailscale serve --bg --https=443 http://127.0.0.1:<local-port>
+tailscale serve status
+```
+
+When starting through the Aspire AppHost, set the public OSLC base URI on the
+_AppHost_ so that the generated OSLC resource URIs use the Tailscale HTTPS URL
+rather than Aspire's local HTTP endpoint:
+
+```sh
+OSLC__PublicBaseUri='https://<node-name>.<tailnet-name>.ts.net/' \
+  aspire start \
+  --apphost src/StrictDocOslcRmServer/StrictDocOslcRm.AppHost/StrictDocOslcRm.AppHost.csproj \
+  --isolated
+```
+
+`OSLC__PublicBaseUri` maps to the `OSLC:PublicBaseUri` configuration key. If it
+is absent, the AppHost retains its normal generated local HTTP endpoint.
+
+When set, this is the authoritative public origin for every OSLC-facing URI:
+root services, SCR, publisher metadata, service/provider/catalog resources,
+configuration resources, OAuth endpoints, and formatter-generated query response
+subjects. It must therefore be the external HTTPS URI, not the local proxy target.
+
+The expected status is equivalent to:
+
+```text
+https://<node-name>.<tailnet-name>.ts.net (tailnet only)
+|-- / proxy http://127.0.0.1:<local-port>
+```
+
+Confirm that the application is listening locally before diagnosing Tailscale:
+
+```sh
+lsof -nP -iTCP:<local-port> -sTCP:LISTEN
+curl -i \
+  -H 'Host: <node-name>.<tailnet-name>.ts.net' \
+  -H 'X-Forwarded-Proto: https' \
+  http://127.0.0.1:<local-port>/rootservices
+```
+
+The second command should return `200`. Supplying the public Host header is
+important: ASP.NET Core host filtering can reject a request sent to
+`127.0.0.1:<local-port>` with `400` even when the reverse-proxied request will
+be accepted.
+
+Validate Serve from a _different_ online device in the tailnet:
+
+```sh
+curl -i https://<node-name>.<tailnet-name>.ts.net/rootservices
+```
+
+Do not treat a request from the Serve host to its own Tailscale IP or MagicDNS
+name as the sole test. On macOS that self-originated path can be reset by the
+Tailscale networking layer before it reaches the proxied application. When this
+happens, the daemon log reports a TLS handshake error ending in
+`socket is not
+connected`; it is not an application response. Use
+`http://localhost:<local-port>/` to browse locally. The local curl above
+verifies the application; a second tailnet node verifies Serve.
+
+### Common checks
+
+```sh
+tailscale status
+tailscale netcheck
+tailscale serve status --json
+```
+
+If `tailscale serve status` shows an obsolete endpoint, remove that endpoint by
+its configured HTTPS port, then configure the desired proxy again:
+
+```sh
+tailscale serve http://127.0.0.1:<old-port> off
+tailscale serve --bg --https=443 http://127.0.0.1:<local-port>
+```
+
+On macOS, check the Application Firewall without disabling it:
+
+```sh
+/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+/usr/libexec/ApplicationFirewall/socketfilterfw --getappblocked \
+  /Library/SystemExtensions/<extension-id>/io.tailscale.ipn.macsys.network-extension.systemextension/Contents/MacOS/io.tailscale.ipn.macsys.network-extension
+```
+
+The active extension path can be obtained with:
+
+```sh
+ps aux | rg '[t]ailscale'
+```
+
+If the local service and Serve configuration are correct but a second tailnet
+device cannot connect, check the tailnet ACL or grant permitting that source to
+reach TCP port 443 on this node. Tailscale Serve is private to the tailnet; use
+Funnel only when public internet exposure is explicitly intended.

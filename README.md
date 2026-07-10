@@ -21,6 +21,38 @@ cd src/StrictDocOslcRmServer/StrictDocOslcRm
 dotnet run
 ```
 
+### Worktree-safe Aspire smoke tests
+
+For agent/worktree development, prefer the Aspire AppHost instead of direct `dotnet run`.
+
+The AppHost is:
+
+```sh
+src/StrictDocOslcRmServer/StrictDocOslcRm.AppHost/StrictDocOslcRm.AppHost.csproj
+```
+
+Use Aspire CLI 13.2 or newer so isolated mode is available:
+
+```sh
+curl -sSL https://aspire.dev/install.sh | bash
+```
+
+Run the app in an isolated, random-port environment:
+
+```sh
+aspire run \
+  --apphost src/StrictDocOslcRmServer/StrictDocOslcRm.AppHost/StrictDocOslcRm.AppHost.csproj \
+  --isolated
+```
+
+For an agent-friendly detached smoke test:
+
+```sh
+scripts/aspire-smoke.sh
+```
+
+The script uses `aspire start --isolated --format Json`, discovers the randomized `strictdoc-oslc-rm` endpoint with `aspire describe --format Json`, curls representative OSLC endpoints, and stops the AppHost on exit. This avoids fixed-port collisions when multiple agents run tests from separate git worktrees.
+
 ### (Optional) Rebuild the requirements site
 
 Install [uv](https://docs.astral.sh/uv/) for Python first. Then run:

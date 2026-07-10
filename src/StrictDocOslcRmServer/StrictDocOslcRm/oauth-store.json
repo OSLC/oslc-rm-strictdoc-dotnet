@@ -1,0 +1,13 @@
+{
+  "Clients": [
+    {
+      "Key": "jazz",
+      "Secret": "jazzsecret",
+      "Name": "IBM Jazz",
+      "Approved": false
+    }
+  ],
+  "RequestTokens": {},
+  "AccessTokens": {},
+  "Nonces": []
+}

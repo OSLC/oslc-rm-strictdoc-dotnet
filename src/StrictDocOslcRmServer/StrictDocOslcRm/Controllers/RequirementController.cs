@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
 using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
+using VDS.RDF.Parsing;
 using Compact = StrictDocOslcRm.Models.Compact;
 using Preview = StrictDocOslcRm.Models.Preview;
 
@@ -15,7 +16,8 @@ namespace StrictDocOslcRm.Controllers;
 public class RequirementController(
     ILogger<RequirementController> logger,
     IBaseUrlService baseUrlService,
-    IStrictDocService strictDocService) : Controller
+    IStrictDocService strictDocService,
+    ILinkSidecarService linkSidecarService) : Controller
 {
     /// <summary>
     /// Unified endpoint for requirement resources, compact resources, and HTML previews.
@@ -152,10 +154,73 @@ public class RequirementController(
 
         // Handle regular Requirement resource request
         requirement.SetAbout(new Uri(requirementUri));
+        requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
+        await linkSidecarService.ApplyLinksAsync(requirement, new Uri(requirementUri), HttpContext.RequestAborted)
+            .ConfigureAwait(false);
 
         // Add Link header for Compact resource (OSLC Resource Preview spec)
         Response.Headers.Append("Link",
             $"<{requirementUri}&compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\"");
+        Response.Headers.Append("Link",
+            $"<{baseUrl}/oslc/shapes/requirement>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}instanceShape\"");
+
+        return Ok(requirement);
+    }
+
+    [HttpPut]
+    [Route("/")]
+    public async Task<IActionResult> PutRequirementResource([FromQuery] string a)
+    {
+        if (string.IsNullOrEmpty(a))
+        {
+            return BadRequest("Parameter 'a' (requirement UID) is required.");
+        }
+
+        var baseUrl = baseUrlService.GetBaseUrl();
+        var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl).ConfigureAwait(false);
+        var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
+
+        if (requirement == null)
+        {
+            return NotFound($"No requirement found with UID '{a}'.");
+        }
+
+        var requirementUri = new Uri($"{baseUrl}/?a={a}");
+
+        using var reader = new StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync(HttpContext.RequestAborted).ConfigureAwait(false);
+
+        try
+        {
+            await linkSidecarService
+                .ReplaceLinksAsync(
+                    requirementUri,
+                    Request.ContentType,
+                    body,
+                    new Uri(baseUrl),
+                    HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+        }
+        catch (NotSupportedException ex)
+        {
+            logger.LogWarning(ex, "Rejected unsupported link sidecar PUT content type for {RequirementUri}", requirementUri);
+            return StatusCode(StatusCodes.Status415UnsupportedMediaType, ex.Message);
+        }
+        catch (Exception ex) when (ex is RdfParseException or InvalidDataException)
+        {
+            logger.LogWarning(ex, "Rejected invalid link sidecar PUT body for {RequirementUri}", requirementUri);
+            return BadRequest(ex.Message);
+        }
+
+        Response.Headers.Allow = "GET, HEAD, OPTIONS, PUT";
+        // REVISIT: Return the spec-preferred empty 204/No Content for successful
+        // link-only PUTs once Jazz accepts that response for directional link updates.
+        // NOTE: Error accessing https://strictdoc-rm.oslc.ldsw.eu/?a=SDOC-HIGH-REQS-MANAGEMENT: No Content from Jazz on 204 No Content response
+        // return NoContent();
+        requirement.SetAbout(requirementUri);
+        requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
+        await linkSidecarService.ApplyLinksAsync(requirement, requirementUri, HttpContext.RequestAborted)
+            .ConfigureAwait(false);
 
         return Ok(requirement);
     }

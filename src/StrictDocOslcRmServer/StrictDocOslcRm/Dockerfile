@@ -1,15 +1,17 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 ARG TARGETARCH
 WORKDIR /src
 
 COPY ["Directory.Packages.props", "."]
 COPY ["StrictDocOslcRm/StrictDocOslcRm.csproj", "./StrictDocOslcRm/"]
-RUN dotnet restore "StrictDocOslcRm/StrictDocOslcRm.csproj"
+RUN DOTNET_ARCH="$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "$TARGETARCH")" && \
+    dotnet restore "StrictDocOslcRm/StrictDocOslcRm.csproj" -r "linux-musl-$DOTNET_ARCH"
 
 COPY . .
 WORKDIR "/src/StrictDocOslcRm"
 # WARN: trim break the conneg for some reason
-RUN dotnet publish "StrictDocOslcRm.csproj" -c Release -o /app/publish --self-contained -a $TARGETARCH /p:DebugType=None /p:DebugSymbols=false
+RUN DOTNET_ARCH="$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "$TARGETARCH")" && \
+    dotnet publish "StrictDocOslcRm.csproj" -c Release -o /app/publish --self-contained -r "linux-musl-$DOTNET_ARCH" --no-restore /p:DebugType=None /p:DebugSymbols=false
 
 # -extra adds full support for Unicode and timezones
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine-extra AS runtime

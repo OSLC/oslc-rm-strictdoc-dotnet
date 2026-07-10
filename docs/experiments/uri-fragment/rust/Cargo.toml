@@ -1,0 +1,8 @@
+[package]
+name = "uri-fragment-probe"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+url = "2.5.8"
+

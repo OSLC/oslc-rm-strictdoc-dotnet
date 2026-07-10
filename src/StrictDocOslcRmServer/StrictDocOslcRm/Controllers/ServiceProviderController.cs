@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
 using OSLC4Net.Domains.RequirementsManagement;
@@ -31,8 +30,12 @@ public class ServiceProviderController(
             return NotFound($"Document with MID '{documentMid}' not found.");
         }
 
+        var baseUrl = baseUrlService.GetBaseUrl();
+        var serviceProviderUri =
+            new Uri($"{baseUrl}/oslc/service_provider/{Uri.EscapeDataString(documentMid)}");
         var serviceProvider = new OSLC4Net.Core.Model.ServiceProvider();
-        serviceProvider.SetAbout(new Uri(Request.GetEncodedUrl()));
+        serviceProvider.SetAbout(serviceProviderUri);
+        serviceProvider.SetDetails([serviceProviderUri]);
         serviceProvider.SetIdentifier(document.Mid);
         serviceProvider.SetTitle(document.Title);
         serviceProvider.SetDescription(
@@ -46,9 +49,8 @@ public class ServiceProviderController(
         queryCap.SetLabel("StrictDoc Requirements Query Capability");
         queryCap.SetResourceTypes([new Uri("http://open-services.net/ns/rm#Requirement")]);
         queryCap.SetResourceShape(
-            new Uri("http://open-services.net/ns/rm/shapes/3.0#RequirementShape"));
+            new Uri($"{baseUrl}/oslc/shapes/requirement"));
 
-        var baseUrl = baseUrlService.GetBaseUrl();
         queryCap.SetQueryBase(
             new Uri($"{baseUrl}/oslc/service_provider/{documentMid}/requirements"));
 
@@ -96,6 +98,7 @@ public class ServiceProviderController(
             if (!string.IsNullOrEmpty(requirement.Identifier))
             {
                 requirement.SetAbout(new Uri($"{baseUrl}/?a={requirement.Identifier}"));
+                requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
             }
         }
 
@@ -170,6 +173,7 @@ public class ServiceProviderController(
         // Set the About URI using new format
         var baseUrl = baseUrlService.GetBaseUrl();
         requirement.SetAbout(new Uri($"{baseUrl}/?a={requirementUid}"));
+        requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
 
         return Ok(requirement);
     }
@@ -195,6 +199,7 @@ public class ServiceProviderController(
             if (!string.IsNullOrEmpty(r.Identifier))
             {
                 r.SetAbout(new Uri($"{baseUrl}/?a={r.Identifier}"));
+                r.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
             }
         }
 

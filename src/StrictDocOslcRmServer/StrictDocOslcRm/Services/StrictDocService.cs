@@ -159,6 +159,8 @@ public class StrictDocService : IStrictDocService
             }
             else if (string.Equals(node.NodeType, StrictDocNodeTypes.CompositeRequirement, StringComparison.Ordinal))
             {
+                // REVISIT: Map StrictDoc composite requirements to OSLC RM
+                // RequirementCollection resources instead of silently omitting them.
                 // TODO: Implement RequirementCollection mapping
                 _logger.LogInformation("Composite requirement found but not yet implemented: {Title}", node.Title);
             }
@@ -186,6 +188,11 @@ public class StrictDocService : IStrictDocService
 
         // Map STATEMENT to Description
         requirement.Description = node.Statement ?? "No Description";
+
+        if (!string.IsNullOrEmpty(baseUrl))
+        {
+            requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
+        }
 
         // Process RELATIONS with type PARENT to Decomposes property
         if (node.Relations != null)

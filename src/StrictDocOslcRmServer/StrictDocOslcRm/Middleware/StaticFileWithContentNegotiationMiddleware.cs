@@ -32,6 +32,12 @@ public class StaticFileWithContentNegotiationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+        {
+            await _next(context).ConfigureAwait(false);
+            return;
+        }
+
         // Check if this is a preview or compact request - always pass to controller
         var hasPreviewParam = context.Request.Query.ContainsKey("preview");
         var hasCompactParam = context.Request.Query.ContainsKey("compact");

@@ -5,9 +5,46 @@ Jazz/CLM material. It is interoperability evidence, not a replacement for the
 OSLC Configuration Management specification. The main design is
 [oslc-config-initial.md](./oslc-config-initial.md); this document explains why
 some specification-level SHOULD or MAY features should be treated as early
-StrictDoc interoperability requirements when Jazz depends on them.
+StrictDoc interoperability requirements when Jazz depends on them. The later
+subtype/TRS/LDX/LQE implementation work is collected in
+[oslc-config-extended.md](./oslc-config-extended.md).
 
 ## Conclusions for StrictDoc
+
+### heliple2 branch used for the implementation audit
+
+The relevant heliple2 source is the checked-out `CM` branch at
+`/Users/ezandbe/code/a/phd/heliple2` (`99dd2a89`, tracking `origin/CM`). This
+branch, rather than the default branch, contains the active Config-management
+changes. Its live surface is:
+
+- `RootServicesService` adds an `oslc:publisher` pointer and an
+  `oslc_config:cmServiceProviders` pointer, while retaining the historical
+  RM/CM/AM catalog pointers;
+- `ScrService` adds the conventional `/scr` resource and points to
+  `/rootservices` and `/application-about`;
+- `PublisherService` exposes application metadata;
+- `Application` registers `ServiceProvider6Service1` as the active Config
+  query/selection service and binds provider 6 through
+  `SAS_ComponentConfigurationRepositoryFactory`;
+- `ServiceProvider6Repo` advertises
+  `jfs_proc:globalConfigurationAware = "yes"`; and
+- Config resource GET/compact/preview services remain available for generic
+  `Configuration` and `Component` resources.
+
+The branch still has no active Stream or Baseline REST service, no dedicated
+Selections or VersionResource endpoint, no Stream/Baseline shape registration,
+and no TRS or LinkProvider implementation. Its Config query is backed by
+ShareAspace ApplicabilityContext data rather than a complete local
+configuration graph.
+
+The branch’s context behavior is also product-specific: it parses
+`oslc.searchTerms` as `{search text} @ {applicability-context-oid}`, constructs
+a base64 `sas-informationfilter` header, and embeds the context OID in
+requirement URIs. This is useful evidence that all linked requirements and
+queries must use the same context, but StrictDoc should translate the behavior
+to the standard `Configuration-Context` header and `oslc_config.context` query
+parameter rather than copy the URI scheme.
 
 ### Configuration is component-scoped
 

@@ -268,6 +268,118 @@ heliple2’s context OID in requirement URIs or its non-standard search-term
 syntax. StrictDoc should use `Configuration-Context` and
 `oslc_config.context`, with the file-backed descriptor as the context object.
 
+## Live Jazz subclassing evidence
+
+The attached OSLC4Net query client was used against the configured live Jazz
+RM server. Credentials came from its local `.env` file and were not recorded
+in this repository. The client’s existing CfgM path is documented in
+[ConfigurationContext.cs](/Users/ezandbe/code/a/phd/paperD/code/scratchpad/oslc4net-query/ConfigurationContext.cs:19)
+and the successful discovery path is recorded in
+[HANDOFF.md](/Users/ezandbe/code/a/phd/paperD/code/scratchpad/oslc4net-query/HANDOFF.md:146).
+
+### Jazz advertises the generic type at discovery time
+
+The live Config service provider at `/rm/oslc_config/components` publishes:
+
+```text
+oslc:resourceType  oslc_config:Configuration
+oslc:queryBase    /rm/configurationQuery
+```
+
+Its component picker and configuration picker also both advertise
+`oslc_config:Configuration`, not `Stream` or `Baseline`. The component itself
+is properly typed and points to an `oslc_config:configurations` container. That
+container contains two Baseline URIs and one Stream URI, but its membership
+triples do not carry the member types inline.
+
+This is strong evidence for keeping the first StrictDoc query and picker
+generic. The subtype distinction is a property of the fetched configuration
+resource, not of the query capability or the container’s `rdfs:member` triple.
+
+### Jazz Baselines carry both type triples
+
+Two live Baselines were fetched and parsed as RDF/XML. Both graphs contain the
+subtype and superclass assertions, although Jazz serializes them differently:
+
+```text
+Baseline A:
+  RDF/XML root element: <oslc_config:Baseline>
+  explicit rdf:type:    oslc_config:Configuration
+
+Baseline B:
+  RDF/XML root element: <oslc_config:Configuration>
+  explicit rdf:type:    oslc_config:Baseline
+```
+
+The RDF graph in both cases therefore contains:
+
+```text
+rdf:type oslc_config:Configuration
+rdf:type oslc_config:Baseline
+```
+
+This is the compatibility rule to emulate. StrictDoc should emit both
+explicit `rdf:type` triples in a deterministic `rdf:Description` graph rather
+than relying on the RDF/XML element name or on a consumer performing RDFS
+inference. The Baseline responses also expose `baselineOfStream`,
+`previousBaseline` where applicable, `selections`, `streams`, `component`,
+`acceptedBy`, `acc:accessContext`, and `process:projectArea`.
+
+### The live Stream URI is currently broken on direct GET
+
+The Stream member URI is:
+
+```text
+/rm/cm/stream/_rDswVviOEfCIbdyfuhkE_Q
+```
+
+Direct authenticated GET returned HTTP 404 for RDF/XML, Turtle, JSON-LD, and
+wildcard `Accept` requests. Jazz returned:
+
+```text
+Could not retrieve IConfigurationDetails for URI:
+https://.../rm/cm/stream/_rDswVviOEfCIbdyfuhkE_Q
+```
+
+Adding a trailing slash, `oslc.select=*`, or a configuration context did not
+change the result. Consequently, this live deployment provides no direct
+Stream RDF from which to infer an additional stream marker. The evidence that
+the URI is a Stream is limited to its URI path, its membership in the
+configuration container, and Baseline `oslc_config:baselineOfStream` links.
+
+The query client’s verbose discovery run nevertheless reported that it had
+discovered the Stream context. That conflicts with the direct 404 probe: the
+client implementation only records a Stream after loading the member and
+checking explicit `rdf:type oslc_config:Stream` in
+[ConfigurationContext.cs](/Users/ezandbe/code/a/phd/paperD/code/scratchpad/oslc4net-query/ConfigurationContext.cs:78).
+The discovery log is therefore useful evidence that Jazz can use the Stream
+URI as a context, but not evidence that direct Stream GET is healthy.
+
+### Implementation consequence
+
+The first StrictDoc probe should emulate the useful Jazz behavior, not the
+broken endpoint:
+
+1. Keep the Config query capability and picker typed as generic
+   `oslc_config:Configuration`.
+2. Resolve the selected context by URI and make RM requests work with that URI
+   in `Configuration-Context`.
+3. If a directly fetched configuration resource is exposed during the
+   compatibility phase, return a usable 200 representation with explicit
+   `rdf:type oslc_config:Configuration`.
+4. When subtype compatibility is enabled, add explicit `rdf:type
+   oslc_config:Stream` or `rdf:type oslc_config:Baseline` alongside the generic
+   type. Do not depend on the XML root element or inference.
+5. Do not copy Jazz’s Stream 404. StrictDoc should make its provider-owned
+   configuration URI directly readable even if the first Jazz workflow only
+   uses the URI as a context token.
+
+The attached client currently recognizes a Stream only through its explicit
+subtype triple. If the generic-only stage is used, the client’s discovery
+helper will need an explicit configuration override or a later compatibility
+adjustment; that is a limitation of the helper, not proof that Jazz requires a
+Stream-specific query capability.
+
 ## Subtype implementation plan after the Jazz assessment
 
 The assessment must be a real black-box test against the target Jazz GCM flow,

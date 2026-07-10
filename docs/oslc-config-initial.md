@@ -699,6 +699,15 @@ shape. It does not yet emit `Stream`, `Baseline`, `Selections`, or
 - a context URI resolves to exactly one validated directory; and
 - the paired JSON/sidecar snapshot revision is used by ETags and caches.
 
+Live Jazz evidence supports this generic-first boundary: its Config query
+capability and both pickers advertise `oslc_config:Configuration`, while its
+Baseline responses carry both explicit `rdf:type Configuration` and
+`rdf:type Baseline` triples. Its currently advertised Stream member also
+returns HTTP 404 on direct GET, so StrictDoc should emulate the useful generic
+discovery/context behavior and the explicit dual-type RDF pattern later, not
+the broken Stream endpoint. The full probe results are recorded in
+[oslc-config-extended.md](./oslc-config-extended.md#live-jazz-subclassing-evidence).
+
 The generic Config query enumerates the registered descriptors and the picker
 returns their stable URIs. A separate Config resource controller is not
 required for Stream and Baseline in this stage: the later subtype phase should
@@ -725,9 +734,11 @@ other tag  -> rdf:type oslc_config:Baseline
 The later resources must include the Component `configurations` container,
 Stream `baselines` and `selections`, Baseline `baselineOfStream`, `streams` and
 `selections`, and Selections that select VersionResource URIs. `Stream` and
-`Baseline` are both subclasses of `Configuration`; separate HTTP handlers are
-not required. See the detailed shape/property rules and generated SDK mapping
-in [oslc-config-extended.md](./oslc-config-extended.md).
+`Baseline` are both subclasses of `Configuration`; emit both the generic and
+subtype `rdf:type` triples for compatibility, and do not rely on RDF/XML root
+element names or inference. Separate HTTP handlers are not required. See the
+detailed shape/property rules and generated SDK mapping in
+[oslc-config-extended.md](./oslc-config-extended.md).
 
 ## Context-aware RM REST contract
 

@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "libraries": [
+    {
+      "provider": "cdnjs",
+      "library": "picocss@1.5.10",
+      "destination": "wwwroot/lib/picocss-v1",
+      "files": [
+        "pico.min.css"
+      ]
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "@picocss/pico@2.0.6",
+      "destination": "wwwroot/lib/picocss-v2",
+      "files": [
+        "css/pico.min.css"
+      ]
+    },
+    {
+      "provider": "cdnjs",
+      "library": "htmx@2.0.4",
+      "destination": "wwwroot/lib/htmx",
+      "files": [
+        "htmx.min.js"
+      ]
+    }
+  ]
+}

@@ -40,6 +40,8 @@ public class RootServicesController(
                         <oslc:domain rdf:resource="http://open-services.net/ns/config#" />
                     </oslc:ServiceProviderCatalog>
         */
+        // REVISIT: Preserve this hand-authored serialization until Jazz no longer
+        // requires its accepted XML layout instead of an RDF-graph-equivalent form.
         var rootServicesBody = $$"""
             <?xml version="1.0" encoding="UTF-8"?>
             <rdf:Description

@@ -43,7 +43,7 @@ public sealed class ConfigurationServiceProviderController(IBaseUrlService baseU
         dialog.SetTitle("StrictDoc Configuration Selection Dialog");
         dialog.SetLabel("Select StrictDoc configuration");
         dialog.SetDialog(new Uri($"{baseUrl}/oslc_config/configurations/selector"));
-        dialog.SetHintWidth("750px");
+        dialog.SetHintWidth("650px");
         dialog.SetHintHeight("750px");
         dialog.SetResourceTypes([new Uri(ConfigurationVocabulary.Configuration)]);
         service.SetSelectionDialogs([dialog]);

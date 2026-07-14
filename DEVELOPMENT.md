@@ -30,6 +30,20 @@ cd src/StrictDocOslcRmServer
 dotnet test --solution StrictDocOslcRm.slnx --no-restore
 ```
 
+## Deployment
+
+Locally:
+
+```sh
+cd ~/code/a/oslc/oslc4net-misc/oslc-rm-strictdoc-dotnet/src ; export manifest=localhost/rm-strictdoc-oslc4net:latest-multi ; export image=sv-forge.berezovskyi.me/smarx721/rm-strictdoc-oslc4net:latest ; podman manifest rm "$manifest" 2>/dev/null || true ; podman build --platform linux/amd64,linux/arm64 --manifest "$manifest" -f StrictDocOslcRmServer/StrictDocOslcRm/Dockerfile StrictDocOslcRmServer/ && podman manifest push --all "$manifest" "docker://$image" && podman manifest rm "$manifest"
+```
+
+Remotely:
+
+```sh
+cd /opt/strictdoc ; docker compose --compatibility up --build -d --remove-orphans --pull always
+```
+
 ## Tailscale Serve debugging
 
 Use Tailscale Serve to make a locally running development server available to

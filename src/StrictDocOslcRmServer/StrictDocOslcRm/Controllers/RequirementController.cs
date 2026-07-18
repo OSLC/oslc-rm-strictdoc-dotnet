@@ -33,7 +33,7 @@ public class RequirementController(
             return BadRequest("Parameter 'a' (requirement UID) is required.");
         }
 
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);
         var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
 
@@ -152,10 +152,13 @@ public class RequirementController(
 
         // Handle regular Requirement resource request
         requirement.SetAbout(new Uri(requirementUri));
+        requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
 
         // Add Link header for Compact resource (OSLC Resource Preview spec)
         Response.Headers.Append("Link",
             $"<{requirementUri}&compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\"");
+        Response.Headers.Append("Link",
+            $"<{baseUrl}/oslc/shapes/requirement>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}instanceShape\"");
 
         return Ok(requirement);
     }

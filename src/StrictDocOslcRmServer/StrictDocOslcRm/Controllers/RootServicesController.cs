@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using OSLC4Net.Domains.RequirementsManagement;
 using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Controllers;
@@ -17,20 +18,27 @@ public class RootServicesController(
     public IActionResult GetRootServices()
     {
         logger.LogDebug("Received request for OSLC Root Services document");
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
+        var escapedBaseUrl = WebUtility.HtmlEncode(baseUrl);
         var serviceTitle = WebUtility.HtmlEncode(configuration["OSLC:ServiceTitle"] ?? "OSLC Requirements Management server for StrictDoc");
 
         var rootServicesBody = $$"""
             <?xml version="1.0" encoding="UTF-8"?>
             <rdf:Description
                     xmlns:oslc_rm="http://open-services.net/xmlns/rm/1.0/"
+                    xmlns:oslc="http://open-services.net/ns/core#"
                     xmlns:dc="http://purl.org/dc/terms/"
                     xmlns:jfs="http://jazz.net/xmlns/prod/jazz/jfs/1.0/"
                     xmlns:jd="http://jazz.net/xmlns/prod/jazz/discovery/1.0/"
                     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-                    rdf:about="{{baseUrl}}/.well-known/oslc/rootservices.xml">
+                    rdf:about="{{escapedBaseUrl}}/.well-known/oslc/rootservices.xml">
                 <dc:title>{{serviceTitle}}</dc:title>
-                <oslc_rm:rmServiceProviders rdf:resource="{{baseUrl}}/oslc/catalog" />
+                <oslc_rm:rmServiceProviders rdf:resource="{{escapedBaseUrl}}/oslc/catalog" />
+                <jd:oslcCatalogs>
+                    <oslc:ServiceProviderCatalog rdf:about="{{escapedBaseUrl}}/oslc/catalog">
+                        <oslc:domain rdf:resource="{{RM.NS}}" />
+                    </oslc:ServiceProviderCatalog>
+                </jd:oslcCatalogs>
                 <jd:jsaSsoEnabled>false</jd:jsaSsoEnabled>
             </rdf:Description>
             """;

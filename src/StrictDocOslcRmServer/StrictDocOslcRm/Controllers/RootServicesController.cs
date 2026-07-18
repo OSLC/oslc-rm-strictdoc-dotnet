@@ -18,9 +18,15 @@ public class RootServicesController(
     public IActionResult GetRootServices()
     {
         logger.LogDebug("Received request for OSLC Root Services document");
+        var appName = "OSLC RM for StrictDoc";
         var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var escapedBaseUrl = WebUtility.HtmlEncode(baseUrl);
         var serviceTitle = WebUtility.HtmlEncode(configuration["OSLC:ServiceTitle"] ?? "OSLC Requirements Management server for StrictDoc");
+        var oauthRequestConsumerKeyUrl = $"{baseUrl}/oauth/request_consumer_key";
+        var oauthApprovalModuleUrl = $"{baseUrl}/oauth/approve_consumer_key";
+        var oauthRequestTokenUrl = $"{baseUrl}/oauth/request_token";
+        var oauthUserAuthorizationUrl = $"{baseUrl}/oauth/authorize";
+        var oauthAccessTokenUrl = $"{baseUrl}/oauth/access_token";
 
         var rootServicesBody = $$"""
             <?xml version="1.0" encoding="UTF-8"?>
@@ -40,6 +46,13 @@ public class RootServicesController(
                     </oslc:ServiceProviderCatalog>
                 </jd:oslcCatalogs>
                 <jd:jsaSsoEnabled>false</jd:jsaSsoEnabled>
+                <jfs:oauthRealmName>{{appName}}</jfs:oauthRealmName>
+                <jfs:oauthDomain>{{escapedBaseUrl}}</jfs:oauthDomain>
+                <jfs:oauthRequestConsumerKeyUrl rdf:resource="{{oauthRequestConsumerKeyUrl}}"/>
+                <jfs:oauthApprovalModuleUrl rdf:resource="{{oauthApprovalModuleUrl}}"/>
+                <jfs:oauthRequestTokenUrl rdf:resource="{{oauthRequestTokenUrl}}"/>
+                <jfs:oauthUserAuthorizationUrl rdf:resource="{{oauthUserAuthorizationUrl}}"/>
+                <jfs:oauthAccessTokenUrl rdf:resource="{{oauthAccessTokenUrl}}"/>
             </rdf:Description>
             """;
 

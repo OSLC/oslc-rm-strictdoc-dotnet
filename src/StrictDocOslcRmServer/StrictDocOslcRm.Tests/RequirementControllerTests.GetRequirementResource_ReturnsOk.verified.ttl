@@ -2,7 +2,8 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<http://localhost:8080/?a=REQ-001> <http://purl.org/dc/terms/description> "This is a test requirement"^^rdf:XMLLiteral;
+<http://localhost:8080/?a=REQ-001> <http://open-services.net/ns/core#instanceShape> <http://localhost:8080/oslc/shapes/requirement>;
+                                   <http://purl.org/dc/terms/description> "This is a test requirement"^^rdf:XMLLiteral;
                                    <http://purl.org/dc/terms/identifier> "REQ-001";
                                    <http://purl.org/dc/terms/title> "Test Requirement"^^rdf:XMLLiteral;
                                    a <http://open-services.net/ns/rm#Requirement>.

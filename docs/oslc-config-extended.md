@@ -1,15 +1,16 @@
 # Extended OSLC Configuration Management design
 
-This document contains the work that should follow the first StrictDoc
-configuration-management probe. The initial milestone is deliberately smaller:
-it exposes generic `oslc_config:Configuration` resources, resolves a selected
-configuration to `/data/{branch}/{tag}/`, and tests the limited Jazz GCM flow
-that heliple2@CM already achieved. The initial milestone is described in
-[oslc-config-initial.md](./oslc-config-initial.md).
+This document contains the work that follows the first StrictDoc
+configuration-management probe and the minimal subtype increment prompted by
+Jazz GCM baseline creation. The implemented slice exposes generic
+`oslc_config:Configuration` resources, resolves a selected configuration to
+`/data/{branch}/{tag}/`, and now emits concrete Stream/Baseline resources plus
+the Stream baselines LDP container. Its current scope is described in
+[oslc-config-initial.md](./oslc-config-initial.md#current-baseline-publication-implementation).
 
-This document covers the later subtype graph and the integration surfaces that
-should not be implemented speculatively: `Stream`, `Baseline`, `Selections`,
-`VersionResource`, TRS, LDX, and LQE interoperability.
+This document covers the remaining subtype graph and the integration surfaces
+that should not be implemented speculatively: `Selections`, `VersionResource`,
+derived Stream containers, TRS, LDX, and LQE interoperability.
 
 The implementation target is still a local configuration provider. StrictDoc
 does not become a global-configuration server merely by exposing local
@@ -211,9 +212,13 @@ HEAD  -> Stream
 other -> Baseline
 ```
 
-It is acceptable for the initial probe to enforce this rule without exposing
-the types. The subtype phase must expose the same rule in RDF and in the
-resource shapes, previews, `Allow` headers, and mutation responses.
+The minimal implementation exposes this rule in RDF: concrete OSLC4Net
+`Stream`/`Baseline` records supply the subtype, and their `Types` collection
+adds explicit `oslc_config:Configuration`. The Stream response is verified to
+serialize in RDF/XML with an `oslc_config:Stream` subject element and the
+secondary generic type, matching the live Jazz Baseline pattern. Resource
+shapes, previews, `Allow` headers, and remaining lifecycle behavior still need
+the follow-up work in this document.
 
 ### Selections and VersionResource
 
@@ -431,8 +436,9 @@ Implement in this order:
    `ComponentUri`, `SnapshotRevision`, and linked container URIs.
 2. Extend the shared configuration handler to emit `Stream` and `Baseline`
    types while retaining the same configuration URI registry.
-3. Add the component configurations LDPC and the stream baselines and baseline
-   streams LDPCs. Return stable `rdfs:member` values and LDP headers.
+3. Add the component configurations LDPC and the Baseline derived-streams
+   LDPC. The implemented Stream baselines LDPC already returns stable
+   `ldp:contains` values; all LDP containers must retain that predicate.
 4. Add one stable `Selections` resource per published configuration and make
    the baseline selections immutable.
 5. Add deterministic VersionResource URIs and the direct version GET/HEAD
@@ -672,7 +678,7 @@ Configuration probe:
 | Endpoint | Methods | Purpose |
 |---|---|---|
 | `{component}/configurations` | `GET`, `HEAD`, `OPTIONS` | enumerate Stream and Baseline members |
-| `{stream}/baselines` | `GET`, `HEAD`, `OPTIONS` | enumerate immutable baselines of a stream |
+| `{stream}/baselines` | `GET`, `HEAD`, `OPTIONS`, `POST` | enumerate immutable baselines; POST creates a baseline snapshot |
 | `{baseline}/streams` | `GET`, `HEAD`, `OPTIONS` | enumerate streams derived from a baseline |
 | configuration resource | `GET`, `HEAD`, `OPTIONS` | subtype RDF, shapes, containers, and metadata |
 | selections resource | `GET`, `HEAD`, `OPTIONS` | VersionResource selections |

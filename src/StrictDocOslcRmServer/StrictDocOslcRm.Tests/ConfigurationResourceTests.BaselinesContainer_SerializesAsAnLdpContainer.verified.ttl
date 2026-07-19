@@ -1,0 +1,6 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://strictdoc.example/oslc_config/configurations/main/HEAD/baselines> a <http://www.w3.org/ns/ldp#Container>;
+                                                                           <http://www.w3.org/ns/ldp#contains> <https://strictdoc.example/oslc_config/configurations/main/v0.1.0>.

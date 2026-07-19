@@ -34,7 +34,12 @@ public sealed class ConfigurationServiceProviderController(IBaseUrlService baseU
         var queryCapability = new QueryCapability();
         queryCapability.SetTitle("StrictDoc Configurations Query Capability");
         queryCapability.SetLabel("StrictDoc Configurations Query Capability");
-        queryCapability.SetResourceTypes([new Uri(ConfigurationVocabulary.Configuration)]);
+        queryCapability.SetResourceTypes(
+        [
+            new Uri(ConfigurationVocabulary.Configuration),
+            new Uri(ConfigurationVocabulary.Stream),
+            new Uri(ConfigurationVocabulary.Baseline)
+        ]);
         queryCapability.SetResourceShape(new Uri($"{baseUrl}/oslc_config/shapes/configuration"));
         queryCapability.SetQueryBase(new Uri($"{baseUrl}/oslc_config/configurations/query"));
         service.AddQueryCapability(queryCapability);
@@ -45,7 +50,12 @@ public sealed class ConfigurationServiceProviderController(IBaseUrlService baseU
         dialog.SetDialog(new Uri($"{baseUrl}/oslc_config/configurations/selector"));
         dialog.SetHintWidth("650px");
         dialog.SetHintHeight("750px");
-        dialog.SetResourceTypes([new Uri(ConfigurationVocabulary.Configuration)]);
+        dialog.SetResourceTypes(
+        [
+            new Uri(ConfigurationVocabulary.Configuration),
+            new Uri(ConfigurationVocabulary.Stream),
+            new Uri(ConfigurationVocabulary.Baseline)
+        ]);
         service.SetSelectionDialogs([dialog]);
 
         provider.SetServices([service]);

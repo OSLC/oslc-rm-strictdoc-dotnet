@@ -3,6 +3,7 @@ ARG TARGETARCH
 WORKDIR /src
 
 COPY ["Directory.Packages.props", "."]
+COPY ["OSLC4Net.Server.Diagnostics/OSLC4Net.Server.Diagnostics.csproj", "./OSLC4Net.Server.Diagnostics/"]
 COPY ["StrictDocOslcRm/StrictDocOslcRm.csproj", "./StrictDocOslcRm/"]
 RUN DOTNET_ARCH="$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "$TARGETARCH")" && \
     dotnet restore "StrictDocOslcRm/StrictDocOslcRm.csproj" -r "linux-musl-$DOTNET_ARCH"

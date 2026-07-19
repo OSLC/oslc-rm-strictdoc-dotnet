@@ -8,6 +8,12 @@ public sealed class OslcIntegrationDiagnosticsOptions
     public const string SectionName = "OslcIntegrationDiagnostics";
 
     /// <summary>
+    /// Logs every HTTP request and response. By default, summaries are limited to requests that
+    /// declare <c>OSLC-Core-Version</c> or whose Accept header does not advertise HTML.
+    /// </summary>
+    public bool LogAllRequests { get; set; }
+
+    /// <summary>
     /// Writes request and response payload files for 4xx and 5xx responses.
     /// </summary>
     public bool CapturePayloads { get; set; }

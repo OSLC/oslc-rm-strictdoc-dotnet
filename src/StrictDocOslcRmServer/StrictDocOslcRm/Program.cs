@@ -45,7 +45,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.SetIsOriginAllowed(_ => true)
-              .WithMethods("GET", "HEAD", "OPTIONS", "PUT")
+              .WithMethods("GET", "HEAD", "OPTIONS", "PUT", "POST")
               .AllowAnyHeader()
               .AllowCredentials();
     });

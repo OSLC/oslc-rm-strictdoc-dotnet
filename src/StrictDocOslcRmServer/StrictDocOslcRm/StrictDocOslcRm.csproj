@@ -19,6 +19,7 @@
     <PackageReference Include="OSLC4Net.Server.Providers"  />
     <PackageReference Include="OSLC4Net.ChangeManagementCommon"  />
     <PackageReference Include="OSLC4Net.Domains.RequirementsManagement"  />
+    <PackageReference Include="OSLC4Net.Domains.ConfigurationManagement" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />

@@ -34,28 +34,37 @@ public sealed class OslcIntegrationDiagnosticsMiddleware(
         var traceId = Activity.Current?.TraceId.ToString() ?? string.Empty;
         var configurationContext = request.Headers["Configuration-Context"].ToString();
         var userAgent = request.Headers.UserAgent.ToString();
+        var jazzTraceIdentifier = request.Headers["X-Com-Ibm-Team-Trace-Identifier"].ToString();
+        var shouldLog = ShouldLogRequest(request);
 
-        logger.LogTrace(
-            "Incoming HTTP request {Method} {Scheme}://{Host}{PathBase}{Path}{QueryString}; " +
-            "TraceIdentifier={TraceIdentifier}; TraceId={TraceId}; ConfigurationContext={ConfigurationContext}; " +
-            "UserAgent={UserAgent}; Accept={Accept}; ContentType={ContentType}",
-            request.Method,
-            request.Scheme,
-            request.Host,
-            request.PathBase,
-            request.Path,
-            request.QueryString,
-            context.TraceIdentifier,
-            traceId,
-            configurationContext,
-            userAgent,
-            request.Headers.Accept.ToString(),
-            request.ContentType);
+        if (shouldLog)
+        {
+            logger.LogTrace(
+                "Incoming HTTP request {Method} {Scheme}://{Host}{PathBase}{Path}{QueryString}; " +
+                "TraceIdentifier={TraceIdentifier}; TraceId={TraceId}; ConfigurationContext={ConfigurationContext}; " +
+                "JazzTraceIdentifier={JazzTraceIdentifier}; UserAgent={UserAgent}; Accept={Accept}; ContentType={ContentType}",
+                request.Method,
+                request.Scheme,
+                request.Host,
+                request.PathBase,
+                request.Path,
+                request.QueryString,
+                context.TraceIdentifier,
+                traceId,
+                configurationContext,
+                jazzTraceIdentifier,
+                userAgent,
+                request.Headers.Accept.ToString(),
+                request.ContentType);
+        }
 
         if (!_options.CapturePayloads)
         {
             await next(context).ConfigureAwait(false);
-            LogResponse(context, startedAt, traceId);
+            if (shouldLog)
+            {
+                LogResponse(context, startedAt, traceId);
+            }
             return;
         }
 
@@ -92,7 +101,11 @@ public sealed class OslcIntegrationDiagnosticsMiddleware(
 
         try
         {
-            LogResponse(context, startedAt, traceId);
+            if (shouldLog)
+            {
+                LogResponse(context, startedAt, traceId);
+            }
+
             if (ShouldCapture(context.Response.StatusCode, requestException))
             {
                 var filePrefix = CreateFilePrefix(context, startedAt);
@@ -109,12 +122,17 @@ public sealed class OslcIntegrationDiagnosticsMiddleware(
                     traceId,
                     requestException,
                     responseCapturePath).ConfigureAwait(false);
-                logger.LogTrace(
-                    "Captured HTTP request/response payloads for {Method} {Path} with status {StatusCode} using prefix {CapturePrefix}",
-                    request.Method,
-                    request.Path,
-                    context.Response.StatusCode,
-                    filePrefix);
+                if (shouldLog)
+                {
+                    logger.LogTrace(
+                        "Captured HTTP request/response payloads for {Method} {Path} with status {StatusCode}; " +
+                        "JazzTraceIdentifier={JazzTraceIdentifier}; CapturePrefix={CapturePrefix}",
+                        request.Method,
+                        request.Path,
+                        context.Response.StatusCode,
+                        jazzTraceIdentifier,
+                        filePrefix);
+                }
             }
         }
         finally
@@ -137,19 +155,26 @@ public sealed class OslcIntegrationDiagnosticsMiddleware(
          (statusCode >= StatusCodes.Status400BadRequest ||
           (_options.CaptureSuccessfulResponses && statusCode is >= StatusCodes.Status200OK and < StatusCodes.Status300MultipleChoices)));
 
+    private bool ShouldLogRequest(HttpRequest request) =>
+        _options.LogAllRequests ||
+        request.Headers.ContainsKey("OSLC-Core-Version") ||
+        !request.Headers.Accept.ToString().Contains("text/html", StringComparison.OrdinalIgnoreCase);
+
     private void LogResponse(HttpContext context, DateTimeOffset startedAt, string traceId)
     {
         var response = context.Response;
         var elapsedMilliseconds = (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds;
         logger.LogTrace(
             "Completed HTTP response {StatusCode} for {Method} {Path}{QueryString}; " +
-            "TraceIdentifier={TraceIdentifier}; TraceId={TraceId}; ElapsedMilliseconds={ElapsedMilliseconds}; Location={Location}",
+            "TraceIdentifier={TraceIdentifier}; TraceId={TraceId}; JazzTraceIdentifier={JazzTraceIdentifier}; " +
+            "ElapsedMilliseconds={ElapsedMilliseconds}; Location={Location}",
             response.StatusCode,
             context.Request.Method,
             context.Request.Path,
             context.Request.QueryString,
             context.TraceIdentifier,
             traceId,
+            context.Request.Headers["X-Com-Ibm-Team-Trace-Identifier"].ToString(),
             elapsedMilliseconds,
             response.Headers.Location.ToString());
 
@@ -275,8 +300,16 @@ public sealed class OslcIntegrationDiagnosticsMiddleware(
             context.Request.Path.Value?.Trim('/').Replace('/', '_') ?? "root");
         var safeEndpoint = string.Concat(endpoint.Select(character =>
             char.IsLetterOrDigit(character) || character is '-' or '_' or '.' ? character : '_'));
-        return $"{startedAt:yyyyMMddTHHmmssfffffffZ}_{startedAt.ToUnixTimeMilliseconds()}_{safeEndpoint}_{context.TraceIdentifier}";
+        var safeTraceIdentifier = SanitizeFileNameSegment(context.TraceIdentifier);
+        var jazzTraceIdentifier = context.Request.Headers["X-Com-Ibm-Team-Trace-Identifier"].ToString();
+        var jazzTraceSuffix = string.IsNullOrWhiteSpace(jazzTraceIdentifier)
+            ? string.Empty
+            : $"_JazzTrace_{SanitizeFileNameSegment(jazzTraceIdentifier)}";
+        return $"{startedAt:yyyyMMddTHHmmssfffffffZ}_{startedAt.ToUnixTimeMilliseconds()}_{safeEndpoint}_{safeTraceIdentifier}{jazzTraceSuffix}";
     }
+
+    private static string SanitizeFileNameSegment(string value) => string.Concat(value.Select(character =>
+        char.IsLetterOrDigit(character) || character is '-' or '_' or '.' ? character : '_'));
 
     private sealed class TeeWriteStream(Stream primary, Stream copy) : Stream
     {

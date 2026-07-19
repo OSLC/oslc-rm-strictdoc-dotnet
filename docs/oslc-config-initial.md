@@ -4,12 +4,13 @@ This is the implementation plan for making the StrictDoc RM server a
 configuration-management-aware OSLC provider and a usable participant in Jazz
 Global Configuration Management (GCM).
 
-The implementation is intentionally staged. The first milestone is a generic
+The implementation is intentionally staged. The first milestone was a generic
 `oslc_config:Configuration` provider with the file-backed context mapping and
-the link-only stream write boundary. We will use that implementation to assess
-Jazz behaviour before committing to the subtype graph. `Stream` and `Baseline`
-are subclasses of `Configuration`, so this sequencing is a wire-level probe,
-not a decision to create unrelated resource models.
+the link-only stream write boundary. Jazz GCM's automated-baseline error then
+identified the first necessary subtype increment: concrete `Stream` and
+`Baseline` representations plus the Stream `baselines` LDP container. `Stream`
+and `Baseline` are subclasses of `Configuration`, so this is a wire-level
+extension of the same resources, not unrelated models.
 
 The implementation target for this document is therefore:
 
@@ -20,7 +21,8 @@ Jazz rootservices/SCR discovery
         -> context-aware RM resolution
         -> link-only PUT on the internal HEAD context
         -> Jazz behaviour assessment
-        -> subtype graph and VersionResources, if required
+        -> minimal Stream/Baseline graph and baseline LDPC
+        -> remaining subtype graph and VersionResources, if required
 ```
 
 The related documents are:
@@ -95,9 +97,37 @@ is the only writable persistence layer for the explicitly accepted link
 properties. A request resolved to `HEAD` can replace the sidecar entry for one
 requirement, but cannot edit StrictDoc titles, descriptions, identifiers,
 hierarchy, or other exported fields. A non-`HEAD` tag is internally immutable
-from the first milestone, even though the response may still use the generic
-Configuration type. The subtype phase will expose these two behaviours as
-Stream and Baseline RDF.
+and is now published as `oslc_config:Baseline`; `HEAD` is published as
+`oslc_config:Stream`.
+
+### Current baseline-publication implementation
+
+The server now exposes the smallest subtype and lifecycle surface needed for
+Jazz to recognise a local stream and request a baseline:
+
+- `GET /oslc_config/configurations/{branch}/HEAD` returns a concrete
+  `oslc_config:Stream` and an explicit secondary
+  `rdf:type oslc_config:Configuration` triple. Its RDF/XML subject is an
+  `oslc_config:Stream` element.
+- `GET /oslc_config/configurations/{branch}/{tag}` where `{tag}` is not
+  `HEAD` returns a concrete `oslc_config:Baseline`, also with the explicit
+  generic type and `oslc_config:baselineOfStream` relation.
+- the Stream carries an `oslc_config:baselines` link to
+  `/oslc_config/configurations/{branch}/HEAD/baselines`; `GET` there returns
+  an `ldp:Container` whose membership predicate is `ldp:contains`.
+- `POST` to that LDP container creates a baseline. It accepts an RDF
+  `dcterms:identifier` (or a safely converted `dcterms:title`) and calls
+  `IConfigurationBaselineService`, whose standalone implementation atomically
+  snapshots both `strictdoc.json` and `sidecar.json` from `HEAD` into the tag
+  directory.
+
+The temporary administrative route
+`POST /oslc_config/configurations/{branch}/baselines/{tag}` remains as a
+marked compatibility alias only; Jazz integration must use the Stream
+baselines container. `Selections`, `VersionResource`, derived Stream
+containers, TRS, LDX, and LQE remain unimplemented and unadvertised.
+The route follows the [OSLC Configuration Management Primer configuration
+guidance](https://docs.oasis-open-projects.org/oslc-op/config-primer/v1.0/config-primer.html).
 
 ### Three integration levels
 
@@ -966,20 +996,21 @@ published provider. StrictDoc should initially:
 - add a standards-advertised POST creation factory, stream/baseline metadata
   PUT, and remote Git publication only after their Jazz flows are observed.
 
-The initial internal HTTP surface is deliberately narrow:
+The standards-shaped baseline HTTP surface is:
 
 ```
-POST /oslc_config/configurations/{branch}/baselines/{tag}
+POST /oslc_config/configurations/{branch}/HEAD/baselines
 ```
 
-It invokes `IConfigurationBaselineService`; the current
+The POST target is the LDP container advertised by `oslc_config:baselines`. It
+invokes `IConfigurationBaselineService`; the current
 `ConfigurationBaselineStandalone` implementation stages a complete local
 snapshot, copies `strictdoc.json` and `sidecar.json` from `{branch}/HEAD`, and
 atomically moves it to `{branch}/{tag}`. It returns `409 Conflict` rather than
 overwriting a published tag. The interface is the seam for the later Git tag,
-remote push, and release-export download workflow. This endpoint is not an
-advertised OSLC CreationFactory yet, so it must not be treated as evidence of
-Jazz baseline-creation conformance.
+remote push, and release-export download workflow. This is an LDP POST, not a
+CreationFactory, and Jazz baseline-creation conformance still depends on
+observing Jazz issuing the POST request.
 
 This is safe only if GCM can enumerate and select existing configurations. It
 must be validated through the actual Jazz picker/contribution flow before the

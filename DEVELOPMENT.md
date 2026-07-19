@@ -32,12 +32,18 @@ dotnet test --solution StrictDocOslcRm.slnx --no-restore
 
 ## OSLC remote-integration diagnostics
 
-`OSLC4Net.Server.Diagnostics` logs every incoming HTTP request and completed
-response at .NET `Trace` level. The request event includes the method, public
-URL, `Configuration-Context`, `User-Agent`, `Accept`, content type, ASP.NET
-trace identifier, and OpenTelemetry trace ID. The response event includes the
-status and duration. A redirect additionally gets a one-line Trace event with
-its `Location` target.
+`OSLC4Net.Server.Diagnostics` logs an incoming request and completed response
+at .NET `Trace` level when the request sends `OSLC-Core-Version` or its
+`Accept` header does not advertise `text/html`. This retains Jazz and other
+machine-client exchanges while omitting ordinary browser navigation. Set
+`OslcIntegrationDiagnostics:LogAllRequests` to `true` for unfiltered request
+logging. The request event includes the method, public URL,
+`Configuration-Context`, `X-Com-Ibm-Team-Trace-Identifier`, `User-Agent`,
+`Accept`, content type, ASP.NET trace identifier, and OpenTelemetry trace ID.
+The response event includes the status and duration. A redirect additionally
+gets a one-line Trace event with its `Location` target. When the IBM trace
+header is present, its filename-safe value is also appended as
+`_JazzTrace_<id>` to the paired capture files.
 
 For exchanges that need raw evidence, configure the following section. When
 `CapturePayloads` is true, the server creates a timestamped pair of files for
@@ -50,7 +56,8 @@ responses. Redirects are never written as payload captures.
     "CapturePayloads": true,
     "CaptureSuccessfulResponses": false,
     "CaptureDirectory": "/absolute/local/path/oslc-integration-diagnostics",
-    "IncludeSensitiveHeaders": false
+    "IncludeSensitiveHeaders": false,
+    "LogAllRequests": false
   }
 }
 ```
@@ -62,6 +69,22 @@ profile enables it for Jazz troubleshooting, so treat the capture directory as
 credential-bearing local data and do not commit or attach its files to issues.
 It also enables `Trace` only for the `OSLC4Net.Server.Diagnostics` logger
 category, without enabling framework-wide Trace logging.
+
+For a Docker Compose deployment, add these environment variables and retain a
+`/data` volume so captures survive container recreation:
+
+```yaml
+environment:
+  Logging__LogLevel__OSLC4Net.Server.Diagnostics: Trace
+  OslcIntegrationDiagnostics__CapturePayloads: "true"
+  OslcIntegrationDiagnostics__CaptureSuccessfulResponses: "true"
+  OslcIntegrationDiagnostics__CaptureDirectory: /data/oslc-integration-diagnostics
+  OslcIntegrationDiagnostics__IncludeSensitiveHeaders: "false"
+```
+
+This captures 2xx baseline-creation POSTs as paired files under
+`/data/oslc-integration-diagnostics`. Do not enable sensitive headers on a
+long-lived host unless the directory is protected and promptly cleaned up.
 
 ## Deployment
 

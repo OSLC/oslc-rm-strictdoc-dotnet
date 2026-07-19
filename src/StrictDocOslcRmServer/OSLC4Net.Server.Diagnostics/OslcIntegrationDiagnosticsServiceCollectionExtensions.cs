@@ -22,8 +22,8 @@ public static class OslcIntegrationDiagnosticsServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Logs every request and response at Trace level, and conditionally writes paired raw
-    /// request/response files when configured by <see cref="OslcIntegrationDiagnosticsOptions"/>.
+    /// Logs OSLC-oriented request and response summaries at Trace level, and conditionally writes
+    /// paired raw request/response files when configured by <see cref="OslcIntegrationDiagnosticsOptions"/>.
     /// </summary>
     public static IApplicationBuilder UseOslcIntegrationDiagnostics(this IApplicationBuilder app)
     {

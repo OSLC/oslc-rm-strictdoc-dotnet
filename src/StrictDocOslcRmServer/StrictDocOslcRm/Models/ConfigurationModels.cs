@@ -8,6 +8,8 @@ public static class ConfigurationVocabulary
 {
     public const string Namespace = "http://open-services.net/ns/config#";
     public const string Configuration = Namespace + "Configuration";
+    public const string Stream = Namespace + "Stream";
+    public const string Baseline = Namespace + "Baseline";
     public const string Component = Namespace + "Component";
     public const string ComponentProperty = Namespace + "component";
     public const string ConfigurationsProperty = Namespace + "configurations";
@@ -18,7 +20,7 @@ public static class LdpVocabulary
 {
     public const string Namespace = "http://www.w3.org/ns/ldp#";
     public const string Container = Namespace + "Container";
-    public const string Member = "http://www.w3.org/2000/01/rdf-schema#member";
+    public const string Member = Namespace + "contains";
 }
 
 [OslcNamespace(ConfigurationVocabulary.Namespace)]
@@ -123,8 +125,8 @@ public sealed record GenericConfigurationContainer : AbstractResourceRecord
     public GenericConfigurationContainer() { }
 
     [OslcPropertyDefinition(LdpVocabulary.Member)]
-    [OslcName("member")]
-    [OslcTitle("Member")]
+    [OslcName("contains")]
+    [OslcTitle("Contains")]
     [OslcValueType(ValueType.Resource)]
     [OslcRepresentation(Representation.Reference)]
     public List<Uri> Members { get; set; } = [];

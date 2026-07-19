@@ -3,12 +3,12 @@
     "DOCUMENTS": [
         {
             "_NODE_TYPE": "DOCUMENT",
-            "MID": "e526fe19bd024f2ea7c84b9bccaf1243",
+            "MID": "b888905af0f540638a3b01f855bb3aca",
             "ROOT": "true",
             "_OPTIONS": {
                 "ENABLE_MID": true
             },
-            "TITLE": "StrictDoc",
+            "TITLE": "StrictDoc OSLC RM demo",
             "GRAMMAR": {
                 "ELEMENTS": [
                     {
@@ -42,51 +42,60 @@
                             },
                             {
                                 "TITLE": "UID",
-                                "REQUIRED": "False",
-                                "TYPE": "String"
-                            },
-                            {
-                                "TITLE": "LEVEL",
-                                "REQUIRED": "False",
-                                "TYPE": "String"
-                            },
-                            {
-                                "TITLE": "STATUS",
-                                "REQUIRED": "False",
-                                "TYPE": "String"
-                            },
-                            {
-                                "TITLE": "TAGS",
-                                "REQUIRED": "False",
+                                "REQUIRED": "True",
                                 "TYPE": "String"
                             },
                             {
                                 "TITLE": "TITLE",
-                                "REQUIRED": "False",
+                                "REQUIRED": "True",
                                 "TYPE": "String"
                             },
                             {
                                 "TITLE": "STATEMENT",
-                                "REQUIRED": "False",
-                                "TYPE": "String"
-                            },
-                            {
-                                "TITLE": "RATIONALE",
-                                "REQUIRED": "False",
-                                "TYPE": "String"
-                            },
-                            {
-                                "TITLE": "COMMENT",
-                                "REQUIRED": "False",
+                                "REQUIRED": "True",
                                 "TYPE": "String"
                             }
                         ],
                         "RELATIONS": [
                             {
-                                "TYPE": "Parent"
+                                "TYPE": "Parent",
+                                "ROLE": "Decomposes"
                             },
                             {
-                                "TYPE": "File"
+                                "TYPE": "Parent",
+                                "ROLE": "Elaborates"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Specifies"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Constrains"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Satisfies"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Decomposed by"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Elaborated by"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Specified by"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Constrained by"
+                            },
+                            {
+                                "TYPE": "Parent",
+                                "ROLE": "Satisfied by"
                             }
                         ]
                     }
@@ -96,22 +105,173 @@
                 {
                     "_TOC": "1",
                     "_NODE_TYPE": "REQUIREMENT",
-                    "MID": "1f790299c6934c5a9edd12f8e9375dc7",
-                    "UID": "SDOC-HIGH-REQS-MANAGEMENT",
-                    "TITLE": "Requirements management",
-                    "STATEMENT": "StrictDoc shall enable requirements management."
+                    "MID": "9e43d393920b42f4b6e8749f033d6f34",
+                    "UID": "SDOC-JAZZ-INTEGRATION",
+                    "TITLE": "Jazz integration",
+                    "STATEMENT": "The StrictDoc OSLC RM server shall interoperate with Jazz as an OSLC RM 2.0 provider."
                 },
                 {
                     "_TOC": "2",
                     "_NODE_TYPE": "REQUIREMENT",
-                    "MID": "877a0a7afa8949979a1a156472e9541c",
-                    "UID": "SDOC-HIGH-REQS-DECOMP",
-                    "TITLE": "Requirements decomposition",
-                    "STATEMENT": "StrictDoc shall support requirement decomposition.",
+                    "MID": "043548a8e58d456e9480c40052563ccf",
+                    "UID": "SDOC-JAZZ-ROOT-SERVICES",
+                    "TITLE": "Root services discovery",
+                    "STATEMENT": "The server shall publish an RDF/XML OSLC root-services document that advertises the RM service-provider catalog and Jazz OSLC catalog descriptor.",
                     "RELATIONS": [
                         {
                             "TYPE": "Parent",
-                            "VALUE": "SDOC-HIGH-REQS-MANAGEMENT"
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Decomposes"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "3",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "b22fab229e014e2f8c353b9abdea7b10",
+                    "UID": "SDOC-JAZZ-SERVICE-PROVIDER",
+                    "TITLE": "Service provider catalog",
+                    "STATEMENT": "The server shall expose an RM service-provider catalog that lists the StrictDoc document service providers and their RM domain.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Decomposed by"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "4",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "14ffd3e0fb274c429c03b1c4796046ec",
+                    "UID": "SDOC-JAZZ-INSTANCE-SHAPE",
+                    "TITLE": "Requirement instance shape",
+                    "STATEMENT": "Each requirement representation shall advertise a provider-owned OSLC RM instance shape that describes its writable link properties.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Elaborates"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "5",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "e59dab13dd2a42439df84c93a2e04a46",
+                    "UID": "SDOC-JAZZ-QUERY-SHAPE",
+                    "TITLE": "Query capability resource shape",
+                    "STATEMENT": "The RM query capability shall advertise the same requirement resource shape that individual requirement representations use.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Elaborated by"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "6",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "82989cb8ee5b44c19d3d09133c56c944",
+                    "UID": "SDOC-JAZZ-OAUTH",
+                    "TITLE": "OAuth 1.0a discovery",
+                    "STATEMENT": "Root services shall advertise OAuth 1.0a consumer registration, request-token, authorization, and access-token endpoints compatible with Jazz.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Specifies"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "7",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "16511d097d9942fe8b2fe34c18af85fc",
+                    "UID": "SDOC-JAZZ-PUBLIC-URI",
+                    "TITLE": "Public resource identity",
+                    "STATEMENT": "Discovery, catalog, service-provider, dialog, shape, OAuth, and requirement links shall use the externally visible HTTPS origin.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Specified by"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "8",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "7a62c7cbdca64aef84d8e945e72fa48a",
+                    "UID": "SDOC-JAZZ-RDF",
+                    "TITLE": "RDF representations",
+                    "STATEMENT": "The server shall serve OSLC resource representations through RDF content negotiation and include OSLC-Core-Version 2.0.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Constrains"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "9",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "2cd7f05f190f423c92d3f011a74fe21d",
+                    "UID": "SDOC-JAZZ-LINK-UPDATES",
+                    "TITLE": "Writable link updates",
+                    "STATEMENT": "The provider shall accept Jazz updates to provider-owned requirement links and return a response that Jazz recognizes as a successful save.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Constrained by"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "10",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "5abb2ccee68f4a5bb5406547e61f1f37",
+                    "UID": "SDOC-JAZZ-RM-RELATIONS",
+                    "TITLE": "OSLC RM relation mapping",
+                    "STATEMENT": "The server shall map StrictDoc Decomposes, Elaborates, Specifies, Constrains, and Satisfies roles to their corresponding OSLC RM properties.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Satisfies"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "11",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "8da8de709e8c4b1684974dcbfc27329f",
+                    "UID": "SDOC-JAZZ-INVERSE-RELATIONS",
+                    "TITLE": "Inverse relation projection",
+                    "STATEMENT": "The server shall add the OSLC RM inverse relation to target requirements when reading a StrictDoc JSON export.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-INTEGRATION",
+                            "ROLE": "Satisfied by"
+                        }
+                    ]
+                },
+                {
+                    "_TOC": "12",
+                    "_NODE_TYPE": "REQUIREMENT",
+                    "MID": "a8d58e2c0baa4688ba7531b2fc21df3a",
+                    "UID": "SDOC-JAZZ-STABLE-LINKS",
+                    "TITLE": "Stable requirement links",
+                    "STATEMENT": "Requirement relation targets shall use stable public requirement URIs so Jazz can navigate and retain links.",
+                    "RELATIONS": [
+                        {
+                            "TYPE": "Parent",
+                            "VALUE": "SDOC-JAZZ-RM-RELATIONS",
+                            "ROLE": "Decomposes"
                         }
                     ]
                 }

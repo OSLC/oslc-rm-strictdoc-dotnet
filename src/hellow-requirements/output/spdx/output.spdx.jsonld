@@ -748,7 +748,7 @@
       "creationInfo": {
         "@type": "CreationInfo",
         "specVersion": "3.0.0",
-        "created": "2025-07-16T01:52:26Z",
+        "created": "2026-07-19T03:04:51Z",
         "profile": [
           "software"
         ],
@@ -780,68 +780,328 @@
     },
     {
       "@type": "File",
-      "@id": "SPDXRef-File-SDocDocument-StrictDoc",
+      "@id": "SPDXRef-File-SDocDocument-StrictDoc_OSLC_RM_demo",
       "name": "hello.sdoc",
-      "summary": "SDPX File for document StrictDoc",
+      "summary": "SDPX File for document StrictDoc OSLC RM demo",
       "verifiedUsing": [
         {
           "@type": "Hash",
           "algorithm": "sha256",
-          "hashValue": "16b555d038ab3804373d7475eb926b2aa3926ba6bc012f052eaa61a298703e45"
+          "hashValue": "afdceb24100c9235602c53a6ecc831426911ae9fb17485f1d870d8c1c83199ab"
         }
       ],
       "primaryPurpose": "documentation"
     },
     {
       "@type": "Snippet",
-      "@id": "SDOC-HIGH-REQS-MANAGEMENT",
-      "name": "Requirement 'Requirements management'",
-      "summary": "SPDX Snippet for requirement SDOC-HIGH-REQS-MANAGEMENT",
-      "description": "StrictDoc shall enable requirements management.",
+      "@id": "SDOC-JAZZ-INTEGRATION",
+      "name": "Requirement 'Jazz integration'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-INTEGRATION",
+      "description": "The StrictDoc OSLC RM server shall interoperate with Jazz as an OSLC RM 2.0 provider.",
       "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
       "verifiedUsing": [
         {
           "@type": "Hash",
           "algorithm": "sha256",
-          "hashValue": "c14500147118475c1d43069f204a2a48b89a5eadbba8b4134bcaced66991ccd8"
+          "hashValue": "62a619136b2d29d6250734b40a1ea1bca9ead39841e96c2691dc1671769c5517"
         }
       ],
       "primaryPurpose": "documentation",
       "byteRange": {
         "@type": "PositiveIntegerRange",
-        "begin": 68,
-        "end": 203
+        "begin": 123,
+        "end": 285
       },
       "lineRange": {
         "@type": "PositiveIntegerRange",
-        "begin": 7,
-        "end": 11
+        "begin": 10,
+        "end": 14
       }
     },
     {
       "@type": "Snippet",
-      "@id": "SDOC-HIGH-REQS-DECOMP",
-      "name": "Requirement 'Requirements decomposition'",
-      "summary": "SPDX Snippet for requirement SDOC-HIGH-REQS-DECOMP",
-      "description": "StrictDoc shall support requirement decomposition.",
+      "@id": "SDOC-JAZZ-ROOT-SERVICES",
+      "name": "Requirement 'Root services discovery'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-ROOT-SERVICES",
+      "description": "The server shall publish an RDF/XML OSLC root-services document that advertises the RM service-provider catalog and Jazz OSLC catalog descriptor.",
       "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
       "verifiedUsing": [
         {
           "@type": "Hash",
           "algorithm": "sha256",
-          "hashValue": "65d426fe80e70c5c5e7c25406d43a0b2a9f70e3455d1d37d942d7697eb27d20c"
+          "hashValue": "9cb792626ea4b1ee8981714c0c8ef6d343c4a55d6f82cd49639747e10bda1842"
         }
       ],
       "primaryPurpose": "documentation",
       "byteRange": {
         "@type": "PositiveIntegerRange",
-        "begin": 204,
-        "end": 402
+        "begin": 286,
+        "end": 593
       },
       "lineRange": {
         "@type": "PositiveIntegerRange",
-        "begin": 12,
-        "end": 19
+        "begin": 15,
+        "end": 23
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-SERVICE-PROVIDER",
+      "name": "Requirement 'Service provider catalog'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-SERVICE-PROVIDER",
+      "description": "The server shall expose an RM service-provider catalog that lists the StrictDoc document service providers and their RM domain.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "0c9fd15612fd1198e36daa79825e9dedf94c13f187a4c3dceae01914b4fe55aa"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 594,
+        "end": 890
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 24,
+        "end": 32
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-INSTANCE-SHAPE",
+      "name": "Requirement 'Requirement instance shape'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-INSTANCE-SHAPE",
+      "description": "Each requirement representation shall advertise a provider-owned OSLC RM instance shape that describes its writable link properties.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "abf090cb16ad38eedcc1cbcaac70031756fb0e342ecfb53cfb3611e12e532389"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 891,
+        "end": 1189
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 33,
+        "end": 41
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-QUERY-SHAPE",
+      "name": "Requirement 'Query capability resource shape'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-QUERY-SHAPE",
+      "description": "The RM query capability shall advertise the same requirement resource shape that individual requirement representations use.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "4f8ede17d6a33a8c67a9ff921c5fcc39bb3e7c8c264ae151f7ba8a74dc39bca0"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 1190,
+        "end": 1485
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 42,
+        "end": 50
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-OAUTH",
+      "name": "Requirement 'OAuth 1.0a discovery'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-OAUTH",
+      "description": "Root services shall advertise OAuth 1.0a consumer registration, request-token, authorization, and access-token endpoints compatible with Jazz.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "dd3eea9a1fd66155990a021b90ba51a170c71702f26658f5ef306fac4d32f8a9"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 1486,
+        "end": 1778
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 51,
+        "end": 59
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-PUBLIC-URI",
+      "name": "Requirement 'Public resource identity'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-PUBLIC-URI",
+      "description": "Discovery, catalog, service-provider, dialog, shape, OAuth, and requirement links shall use the externally visible HTTPS origin.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "4614cbb5bf1442664208a277ef8dd647447e165292532433c4f65872e1226c88"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 1779,
+        "end": 2069
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 60,
+        "end": 68
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-RDF",
+      "name": "Requirement 'RDF representations'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-RDF",
+      "description": "The server shall serve OSLC resource representations through RDF content negotiation and include OSLC-Core-Version 2.0.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "0c8ea654d68a89b0cd10b9adb027017319cef4313ab842b65ef980fc49a9bd64"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 2070,
+        "end": 2337
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 69,
+        "end": 77
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-LINK-UPDATES",
+      "name": "Requirement 'Writable link updates'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-LINK-UPDATES",
+      "description": "The provider shall accept Jazz updates to provider-owned requirement links and return a response that Jazz recognizes as a successful save.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "fb966bec7ff6c0a44fbb2bdb8d712c3b4ab00adc9ebb407d5c27fb908c832e49"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 2338,
+        "end": 2640
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 78,
+        "end": 86
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-RM-RELATIONS",
+      "name": "Requirement 'OSLC RM relation mapping'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-RM-RELATIONS",
+      "description": "The server shall map StrictDoc Decomposes, Elaborates, Specifies, Constrains, and Satisfies roles to their corresponding OSLC RM properties.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "ae9a0786e50d4896ab3a04c457fc0b9fb3848ff4838de13a94684fc4b1a18353"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 2641,
+        "end": 2942
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 87,
+        "end": 95
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-INVERSE-RELATIONS",
+      "name": "Requirement 'Inverse relation projection'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-INVERSE-RELATIONS",
+      "description": "The server shall add the OSLC RM inverse relation to target requirements when reading a StrictDoc JSON export.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "f37a83c0cd7c4503284e473419bc8f4ceea396b3007c2bf61713753ce43a874e"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 2943,
+        "end": 3225
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 96,
+        "end": 104
+      }
+    },
+    {
+      "@type": "Snippet",
+      "@id": "SDOC-JAZZ-STABLE-LINKS",
+      "name": "Requirement 'Stable requirement links'",
+      "summary": "SPDX Snippet for requirement SDOC-JAZZ-STABLE-LINKS",
+      "description": "Requirement relation targets shall use stable public requirement URIs so Jazz can navigate and retain links.",
+      "comment": "This snippet has been generated from a requirement defined in a StrictDoc file: hello.sdoc.",
+      "verifiedUsing": [
+        {
+          "@type": "Hash",
+          "algorithm": "sha256",
+          "hashValue": "8cc579d0a06d0cdef7f90feb5ee2a47c59563b3aa8d74f291e9a22ec4fa94dfc"
+        }
+      ],
+      "primaryPurpose": "documentation",
+      "byteRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 3226,
+        "end": 3497
+      },
+      "lineRange": {
+        "@type": "PositiveIntegerRange",
+        "begin": 105,
+        "end": 113
       }
     }
   ]

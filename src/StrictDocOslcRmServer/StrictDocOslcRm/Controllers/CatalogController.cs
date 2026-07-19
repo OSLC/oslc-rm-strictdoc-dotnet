@@ -21,11 +21,12 @@ public class CatalogController(
     public async Task<OSLC4Net.Core.Model.ServiceProviderCatalog> Get()
     {
         var catalog = new OSLC4Net.Core.Model.ServiceProviderCatalog();
-        catalog.SetAbout(new Uri($"{baseUrlService.GetBaseUrl()}/oslc/catalog"));
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
+        catalog.SetAbout(new Uri($"{baseUrl}/oslc/catalog"));
         catalog.SetTitle("StrictDoc Requirements Management Service Provider Catalog");
         catalog.SetDescription(
             "Service provider catalog for the StrictDoc Requirements Management server");
-        catalog.AddDomain(new Uri("http://open-services.net/ns/rm#"));
+        catalog.AddDomain(new Uri(RM.NS));
 
         try
         {
@@ -53,7 +54,7 @@ public class CatalogController(
         var serviceProvider = new OSLC4Net.Core.Model.ServiceProvider();
 
         // Set the about URI for this service provider using the document MID
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var serviceProviderUri = new Uri($"{baseUrl}/oslc/service_provider/{document.Mid}");
         serviceProvider.SetAbout(serviceProviderUri);
         serviceProvider.SetDetails([serviceProviderUri]);
@@ -68,13 +69,13 @@ public class CatalogController(
         serviceProvider.SetDescription($"OSLC Requirements Management service for StrictDoc document: {document.Title}");
 
         var service = new Service();
-        service.SetDomain(new Uri("http://open-services.net/ns/rm#"));
+        service.SetDomain(new Uri(RM.NS));
 
         var queryCapability = new QueryCapability();
         queryCapability.SetTitle("StrictDoc Requirements Query Capability");
         queryCapability.SetLabel("StrictDoc Requirements Query Capability");
         queryCapability.SetResourceTypes(
-            [new Uri("http://open-services.net/ns/rm#Requirement")]);
+            [new Uri(RM.Requirement)]);
         queryCapability.SetResourceShape(
             new Uri($"{baseUrl}/oslc/shapes/requirement"));
         queryCapability.SetQueryBase(
@@ -86,10 +87,10 @@ public class CatalogController(
         selectionDialog.SetLabel("Select Requirement");
         selectionDialog.SetDialog(
             new Uri($"{serviceProviderUri}/requirements/selector"));
-        selectionDialog.SetHintWidth("500px");
+        selectionDialog.SetHintWidth("650px");
         selectionDialog.SetHintHeight("500px");
         selectionDialog.SetResourceTypes(
-            [new Uri("http://open-services.net/ns/rm#Requirement")]);
+            [new Uri(RM.Requirement)]);
         service.SetSelectionDialogs([selectionDialog]);
 
         serviceProvider.SetServices([service]);

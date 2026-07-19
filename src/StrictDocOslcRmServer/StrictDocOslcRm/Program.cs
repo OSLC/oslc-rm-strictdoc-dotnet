@@ -1,8 +1,7 @@
-using OSLC4Net.Server.Providers;
-using OSLC4Net.Server.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
+using OSLC4Net.Server.Diagnostics;
+using OSLC4Net.Server.Providers;
 using StrictDocOslcRm.Middleware;
 using StrictDocOslcRm.Services;
 
@@ -35,7 +34,6 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOIN
 // registry/token implementation, or delegate authentication to the deployment
 // boundary once Jazz interop no longer depends on this in-process compatibility shim.
 builder.Services.AddToyOAuth1(builder.Configuration);
-
 // Add services to the container (controllers + views for Razor selection dialog)
 builder.Services.AddControllersWithViews(o => o.OutputFormatters.Insert(0, new OslcRdfOutputFormatter()));
 
@@ -101,7 +99,6 @@ app.Use((context, next) =>
     return next();
 });
 app.MapToyOAuth1Provider();
-
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {

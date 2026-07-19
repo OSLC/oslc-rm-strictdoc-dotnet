@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using OSLC4Net.Domains.RequirementsManagement;
 using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Controllers;
@@ -20,7 +21,7 @@ public class RootServicesController(
     {
         logger.LogDebug("Received request for OSLC Root Services document");
         var appName = "OSLC RM for StrictDoc";
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var escapedBaseUrl = WebUtility.HtmlEncode(baseUrl);
         var serviceTitle = WebUtility.HtmlEncode(
             configuration["OSLC:ServiceTitle"]
@@ -59,12 +60,12 @@ public class RootServicesController(
                 <oslc_config:cmServiceProviders rdf:resource="{{escapedBaseUrl}}/oslc_config/catalog" />
                 <jd:oslcCatalogs>
                     <oslc:ServiceProviderCatalog rdf:about="{{escapedBaseUrl}}/oslc/catalog">
-                        <oslc:domain rdf:resource="http://open-services.net/ns/rm#" />
+                        <oslc:domain rdf:resource="{{RM.NS}}" />
                     </oslc:ServiceProviderCatalog>
                 </jd:oslcCatalogs>
                 <jd:jsaSsoEnabled>false</jd:jsaSsoEnabled>
                 <jfs:oauthRealmName>{{appName}}</jfs:oauthRealmName>
-                <jfs:oauthDomain>{{baseUrl}}</jfs:oauthDomain>
+                <jfs:oauthDomain>{{escapedBaseUrl}}</jfs:oauthDomain>
                 <jfs:oauthRequestConsumerKeyUrl rdf:resource="{{oauthRequestConsumerKeyUrl}}"/>
                 <jfs:oauthApprovalModuleUrl rdf:resource="{{oauthApprovalModuleUrl}}"/>
                 <jfs:oauthRequestTokenUrl rdf:resource="{{oauthRequestTokenUrl}}"/>

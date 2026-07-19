@@ -25,11 +25,37 @@ public static class ToyOAuth1AspNetExtensions
                             ?? configuration["OSLC:PublicBaseUrl"]
                             ?? configuration["OSLC:PublicBaseUri"]
                             ?? "";
+        var seedClients = GetSeedClients(configuration);
 
-        services.AddSingleton(new OAuthStore(storePath));
+        services.AddSingleton(new OAuthStore(storePath, seedClients));
         services.AddSingleton(new OAuth1(publicBaseUrl));
         return services;
     }
+
+    private static IReadOnlyList<Client> GetSeedClients(IConfiguration configuration) =>
+        configuration.GetSection("OAuth1:SeedClients")
+            .GetChildren()
+            .Select(section =>
+            {
+                var key = section["Key"];
+                var secret = section["Secret"];
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(secret))
+                {
+                    return null;
+                }
+
+                return new Client
+                {
+                    Key = key,
+                    Secret = secret,
+                    Name = section["Name"] ?? key,
+                    Approved = bool.TryParse(section["Approved"], out var approved)
+                        ? approved
+                        : true
+                };
+            })
+            .OfType<Client>()
+            .ToArray();
 
     public static IEndpointRouteBuilder MapToyOAuth1Provider(this IEndpointRouteBuilder endpoints,
         string prefix = "/oauth")
@@ -89,11 +115,11 @@ public static class ToyOAuth1AspNetExtensions
 
         return Results.Text(OAuth1.FormEncode(new Dictionary<string, string>
             (StringComparer.Ordinal)
-            {
-                ["oauth_token"] = token,
-                ["oauth_token_secret"] = secret,
-                ["oauth_callback_confirmed"] = "true"
-            }), "application/x-www-form-urlencoded");
+        {
+            ["oauth_token"] = token,
+            ["oauth_token_secret"] = secret,
+            ["oauth_callback_confirmed"] = "true"
+        }), "application/x-www-form-urlencoded");
     }
 
     private static IResult AuthorizePage(HttpRequest req, OAuthStore store, string authorizePath)
@@ -158,9 +184,10 @@ public static class ToyOAuth1AspNetExtensions
         {
             return RedirectWithOAuthParams(callback, new Dictionary<string, string>
                 (StringComparer.Ordinal)
-                {
-                    ["oauth_token"] = token, ["oauth_verifier"] = verifier
-                });
+            {
+                ["oauth_token"] = token,
+                ["oauth_verifier"] = verifier
+            });
         }
 
         return Results.Content(RenderApprovedPage(token, verifier), "text/html");
@@ -186,9 +213,10 @@ public static class ToyOAuth1AspNetExtensions
         {
             return RedirectWithOAuthParams(callback, new Dictionary<string, string>
                 (StringComparer.Ordinal)
-                {
-                    ["oauth_token"] = token, ["oauth_problem"] = "permission_denied"
-                });
+            {
+                ["oauth_token"] = token,
+                ["oauth_problem"] = "permission_denied"
+            });
         }
 
         return Results.Content(RenderCanceledPage(token), "text/html");
@@ -230,9 +258,10 @@ public static class ToyOAuth1AspNetExtensions
 
         return Results.Text(OAuth1.FormEncode(new Dictionary<string, string>
             (StringComparer.Ordinal)
-            {
-                ["oauth_token"] = accessToken, ["oauth_token_secret"] = accessSecret
-            }), "application/x-www-form-urlencoded");
+        {
+            ["oauth_token"] = accessToken,
+            ["oauth_token_secret"] = accessSecret
+        }), "application/x-www-form-urlencoded");
     }
 
     private static IResult RedirectWithOAuthParams(string callback,
@@ -341,7 +370,10 @@ public static class ToyOAuth1AspNetExtensions
             {
                 s.Clients.Add(new Client
                 {
-                    Key = key, Secret = secret, Name = name, Approved = false
+                    Key = key,
+                    Secret = secret,
+                    Name = name,
+                    Approved = false
                 });
                 return;
             }
@@ -363,12 +395,18 @@ public static class ToyOAuth1AspNetExtensions
     private static IResult ApproveConsumerKeyPage(HttpRequest req, OAuthStore store)
     {
         var key = req.Query["oauth_consumer_key"].ToString();
-        if (string.IsNullOrWhiteSpace(key)) key = "jazz";
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            key = "jazz";
+        }
 
         lock (store.Gate)
         {
             var client = store.Data.Clients.FirstOrDefault(c => c.Key == key);
-            if (client is null) return Results.BadRequest("unknown oauth_consumer_key");
+            if (client is null)
+            {
+                return Results.BadRequest("unknown oauth_consumer_key");
+            }
 
             return Results.Content($$"""
                                     <!doctype html>
@@ -414,17 +452,27 @@ public static class ToyOAuth1AspNetExtensions
         var key = form["oauth_consumer_key"].ToString();
         var decision = form["decision"].ToString();
 
-        if (string.IsNullOrWhiteSpace(key)) return Results.BadRequest("missing oauth_consumer_key");
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return Results.BadRequest("missing oauth_consumer_key");
+        }
 
         store.Upsert(s =>
         {
             var client = s.Clients.FirstOrDefault(c => c.Key == key);
-            if (client is null) return;
+            if (client is null)
+            {
+                return;
+            }
 
             if (decision == "approve")
+            {
                 client.Approved = true;
+            }
             else if (!client.Approved)
+            {
                 s.Clients.Remove(client);
+            }
         });
 
         return Results.Content($"""
@@ -791,12 +839,12 @@ public sealed class OAuthStore
     private readonly string _path;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    public OAuthStore(string path)
+    public OAuthStore(string path, IReadOnlyCollection<Client>? seedClients = null)
     {
         _path = path;
         Data = File.Exists(path)
-            ? JsonSerializer.Deserialize<Store>(File.ReadAllText(path), JsonOptions) ?? Store.Seed()
-            : Store.Seed();
+            ? JsonSerializer.Deserialize<Store>(File.ReadAllText(path), JsonOptions) ?? Store.Seed(seedClients)
+            : Store.Seed(seedClients);
         lock (Gate)
         {
             SaveUnsafe();
@@ -830,12 +878,9 @@ public sealed class Store
     public Dictionary<string, AccessToken> AccessTokens { get; set; } = new(StringComparer.Ordinal);
     public List<NonceSeen> Nonces { get; set; } = [];
 
-    public static Store Seed() => new()
+    public static Store Seed(IReadOnlyCollection<Client>? seedClients) => new()
     {
-        Clients =
-        [
-            new Client { Key = "jazz", Secret = "jazzsecret", Name = "IBM Jazz toy client" }
-        ]
+        Clients = seedClients?.ToList() ?? []
     };
 }
 

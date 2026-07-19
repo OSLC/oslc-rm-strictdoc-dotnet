@@ -43,7 +43,7 @@ public class ServiceProviderController(
             return NotFound($"Document with MID '{documentMid}' not found.");
         }
 
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var serviceProviderUri =
             new Uri($"{baseUrl}/oslc/service_provider/{Uri.EscapeDataString(documentMid)}");
         var serviceProvider = new OSLC4Net.Core.Model.ServiceProvider();
@@ -55,12 +55,12 @@ public class ServiceProviderController(
             $"OSLC Requirements Management service for StrictDoc document: {document.Title}");
 
         var svc = new OSLC4Net.Core.Model.Service();
-        svc.SetDomain(new Uri("http://open-services.net/ns/rm#"));
+        svc.SetDomain(new Uri(RM.NS));
 
         var queryCap = new QueryCapability();
         queryCap.SetTitle("StrictDoc Requirements Query Capability");
         queryCap.SetLabel("StrictDoc Requirements Query Capability");
-        queryCap.SetResourceTypes([new Uri("http://open-services.net/ns/rm#Requirement")]);
+        queryCap.SetResourceTypes([new Uri(RM.Requirement)]);
         queryCap.SetResourceShape(
             new Uri($"{baseUrl}/oslc/shapes/requirement"));
 
@@ -75,9 +75,9 @@ public class ServiceProviderController(
         selectionDialog.SetLabel("Select Requirement");
         selectionDialog.SetDialog(
             new Uri($"{baseUrl}/oslc/service_provider/{documentMid}/requirements/selector"));
-        selectionDialog.SetHintWidth("500px");
+        selectionDialog.SetHintWidth("650px");
         selectionDialog.SetHintHeight("500px");
-        selectionDialog.SetResourceTypes([new Uri("http://open-services.net/ns/rm#Requirement")]);
+        selectionDialog.SetResourceTypes([new Uri(RM.Requirement)]);
         svc.SetSelectionDialogs([selectionDialog]);
 
         serviceProvider.SetServices([svc]);
@@ -95,7 +95,7 @@ public class ServiceProviderController(
     [Route("{documentMid}/requirements")]
     public async Task<IActionResult> GetRequirements(string documentMid)
     {
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
 
         ConfigurationContext context;
         try
@@ -195,7 +195,7 @@ public class ServiceProviderController(
     public async Task<ActionResult<Requirement>> GetRequirement(string documentMid,
         string requirementUid)
     {
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         ConfigurationContext context;
         try
         {
@@ -236,7 +236,7 @@ public class ServiceProviderController(
     public async Task<IActionResult> RequirementSelector(string documentMid,
         [FromQuery] string? terms = null)
     {
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var selectorUri = $"{baseUrl}/oslc/service_provider/{documentMid}/requirements/selector";
 
         ConfigurationContext context;

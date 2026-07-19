@@ -2,7 +2,6 @@ using System.Text;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using OSLC4Net.Core;
 using OSLC4Net.Core.Model;
 using OSLC4Net.Server.Providers;
 using StrictDocOslcRm.Models;

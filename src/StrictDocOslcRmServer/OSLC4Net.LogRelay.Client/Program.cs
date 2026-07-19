@@ -78,14 +78,29 @@ try
     {
         string source = Required(command, "--source");
         string query = $"v1/stream?source={Uri.EscapeDataString(source)}";
-        if (Option(command, "--cursor") is { } cursor) query += $"&cursor={Uri.EscapeDataString(cursor)}";
-        if (Option(command, "--contains") is { } contains) query += $"&contains={Uri.EscapeDataString(contains)}";
+        if (Option(command, "--cursor") is { } cursor)
+        {
+            query += $"&cursor={Uri.EscapeDataString(cursor)}";
+        }
+
+        if (Option(command, "--contains") is { } contains)
+        {
+            query += $"&contains={Uri.EscapeDataString(contains)}";
+        }
+
         using HttpResponseMessage response = await client.GetAsync(query, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode) throw new RelayHttpException(response.StatusCode, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new RelayHttpException(response.StatusCode, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        }
+
         using StreamReader reader = new(await response.Content.ReadAsStreamAsync().ConfigureAwait(false));
         while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
         {
-            if (line.StartsWith("data: ", StringComparison.Ordinal)) Output.WriteLine(line[6..]);
+            if (line.StartsWith("data: ", StringComparison.Ordinal))
+            {
+                Output.WriteLine(line[6..]);
+            }
         }
         return;
     }
@@ -117,7 +132,11 @@ static async Task PrintResponseAsync(HttpClient client, string path, bool json)
 {
     using HttpResponseMessage response = await client.GetAsync(path).ConfigureAwait(false);
     string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-    if (!response.IsSuccessStatusCode) throw new RelayHttpException(response.StatusCode, body);
+    if (!response.IsSuccessStatusCode)
+    {
+        throw new RelayHttpException(response.StatusCode, body);
+    }
+
     if (json)
     {
         Output.WriteLine(body);
@@ -127,7 +146,11 @@ static async Task PrintResponseAsync(HttpClient client, string path, bool json)
     using JsonDocument document = JsonDocument.Parse(body);
     if (document.RootElement.TryGetProperty("lines", out JsonElement lines))
     {
-        foreach (JsonElement line in lines.EnumerateArray()) Output.WriteLine(line.GetProperty("text").GetString() ?? string.Empty);
+        foreach (JsonElement line in lines.EnumerateArray())
+        {
+            Output.WriteLine(line.GetProperty("text").GetString() ?? string.Empty);
+        }
+
         return;
     }
     Output.WriteLine(JsonSerializer.Serialize(document.RootElement, RelayClientJsonContext.Default.JsonElement));
@@ -146,15 +169,27 @@ static void HandleProfiles(string[] args)
     string name = Required(args, "--name");
     if (action == "get")
     {
-        if (!profiles.TryGetValue(name, out RelayProfile? profile)) throw new UsageException($"Profile '{name}' does not exist.");
+        if (!profiles.TryGetValue(name, out RelayProfile? profile))
+        {
+            throw new UsageException($"Profile '{name}' does not exist.");
+        }
+
         Write(new ProfileDetails(name, profile.Url), RelayClientJsonContext.Default.ProfileDetails);
         return;
     }
     if (action == "set")
     {
-        if (profiles.ContainsKey(name) && !args.Contains("--force", StringComparer.Ordinal)) throw new UsageException($"Profile '{name}' exists; repeat with --force to replace it.");
+        if (profiles.ContainsKey(name) && !args.Contains("--force", StringComparer.Ordinal))
+        {
+            throw new UsageException($"Profile '{name}' exists; repeat with --force to replace it.");
+        }
+
         string url = Required(args, "--url");
-        if (!Uri.TryCreate(url, UriKind.Absolute, out _)) throw new UsageException("--url must be an absolute HTTP(S) URL.");
+        if (!Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            throw new UsageException("--url must be an absolute HTTP(S) URL.");
+        }
+
         profiles[name] = new RelayProfile(url, Required(args, "--api-key"));
         SaveProfiles(profiles);
         Write(new ProfileMutation(name, true, false), RelayClientJsonContext.Default.ProfileMutation);
@@ -162,7 +197,11 @@ static void HandleProfiles(string[] args)
     }
     if (action == "delete")
     {
-        if (!args.Contains("--force", StringComparer.Ordinal)) throw new UsageException("Profile deletion requires --force.");
+        if (!args.Contains("--force", StringComparer.Ordinal))
+        {
+            throw new UsageException("Profile deletion requires --force.");
+        }
+
         profiles.Remove(name);
         SaveProfiles(profiles);
         Write(new ProfileMutation(name, false, true), RelayClientJsonContext.Default.ProfileMutation);
@@ -175,9 +214,17 @@ static RelayProfile ResolveProfile(string[] args)
 {
     string? url = Option(args, "--url") ?? Environment.GetEnvironmentVariable("LOG_RELAY_URL");
     string? apiKey = Option(args, "--api-key") ?? Environment.GetEnvironmentVariable("LOG_RELAY_API_KEY");
-    if (url is not null && apiKey is not null) return new RelayProfile(url, apiKey);
+    if (url is not null && apiKey is not null)
+    {
+        return new RelayProfile(url, apiKey);
+    }
+
     string name = Option(args, "--profile") ?? Environment.GetEnvironmentVariable("LOG_RELAY_PROFILE") ?? "default";
-    if (!LoadProfiles().TryGetValue(name, out RelayProfile? profile)) throw new InvalidOperationException($"No credentials supplied and profile '{name}' does not exist. Use profiles set --name {name} --url <url> --api-key <key>.");
+    if (!LoadProfiles().TryGetValue(name, out RelayProfile? profile))
+    {
+        throw new InvalidOperationException($"No credentials supplied and profile '{name}' does not exist. Use profiles set --name {name} --url <url> --api-key <key>.");
+    }
+
     return new RelayProfile(url ?? profile.Url, apiKey ?? profile.ApiKey);
 }
 
@@ -196,8 +243,16 @@ static string? Option(IEnumerable<string> args, string name)
 
 static int ParseLimit(string? value)
 {
-    if (value is null) return 100;
-    if (!int.TryParse(value, out int parsed) || parsed is < 1 or > 1_000) throw new UsageException("--limit must be an integer from 1 through 1000.");
+    if (value is null)
+    {
+        return 100;
+    }
+
+    if (!int.TryParse(value, out int parsed) || parsed is < 1 or > 1_000)
+    {
+        throw new UsageException("--limit must be an integer from 1 through 1000.");
+    }
+
     return parsed;
 }
 
@@ -219,8 +274,15 @@ static void Write<T>(T value, JsonTypeInfo<T> typeInfo) => Output.WriteLine(Json
 static void Fail(string message, int exitCode, bool json)
 {
     ErrorResponse error = new(message, exitCode);
-    if (json) Output.WriteLine(JsonSerializer.Serialize(error, RelayClientJsonContext.Default.ErrorResponse));
-    else Console.Error.WriteLine($"Error: {message}");
+    if (json)
+    {
+        Output.WriteLine(JsonSerializer.Serialize(error, RelayClientJsonContext.Default.ErrorResponse));
+    }
+    else
+    {
+        Console.Error.WriteLine($"Error: {message}");
+    }
+
     Environment.ExitCode = exitCode;
 }
 
@@ -244,16 +306,30 @@ static class Output
     public static void Configure(string? path)
     {
         outputPath = path;
-        if (path is null) return;
+        if (path is null)
+        {
+            return;
+        }
+
         string? directory = Path.GetDirectoryName(Path.GetFullPath(path));
-        if (directory is not null) Directory.CreateDirectory(directory);
+        if (directory is not null)
+        {
+            Directory.CreateDirectory(directory);
+        }
+
         File.WriteAllText(path, string.Empty);
     }
 
     public static void WriteLine(string value)
     {
-        if (outputPath is null) Console.WriteLine(value);
-        else File.AppendAllText(outputPath, value + Environment.NewLine);
+        if (outputPath is null)
+        {
+            Console.WriteLine(value);
+        }
+        else
+        {
+            File.AppendAllText(outputPath, value + Environment.NewLine);
+        }
     }
 }
 

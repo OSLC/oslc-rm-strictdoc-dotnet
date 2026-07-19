@@ -1,0 +1,47 @@
+[GRAMMAR]
+ELEMENTS:
+- TAG: REQUIREMENT
+  FIELDS:
+  - TITLE: MID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  RELATIONS:
+  - TYPE: Parent
+    ROLE: Decomposes
+    REVERSE_ROLE: Decomposed by
+  - TYPE: Parent
+    ROLE: Elaborates
+    REVERSE_ROLE: Elaborated by
+  - TYPE: Parent
+    ROLE: Specifies
+    REVERSE_ROLE: Specified by
+  - TYPE: Parent
+    ROLE: Constrains
+    REVERSE_ROLE: Constrained by
+  - TYPE: Parent
+    ROLE: Satisfies
+    REVERSE_ROLE: Satisfied by
+  - TYPE: Parent
+    ROLE: Decomposed by
+    REVERSE_ROLE: Decomposes
+  - TYPE: Parent
+    ROLE: Elaborated by
+    REVERSE_ROLE: Elaborates
+  - TYPE: Parent
+    ROLE: Specified by
+    REVERSE_ROLE: Specifies
+  - TYPE: Parent
+    ROLE: Constrained by
+    REVERSE_ROLE: Constrains
+  - TYPE: Parent
+    ROLE: Satisfied by
+    REVERSE_ROLE: Satisfies

@@ -17,7 +17,7 @@ public class RequirementShapeController(IBaseUrlService baseUrlService) : Contro
     public IActionResult Get()
     {
         var shape = ResourceShapeFactory.CreateResourceShape(
-            baseUrlService.GetBaseUrl(),
+            baseUrlService.GetBaseUrl().TrimEnd('/'),
             "oslc/shapes",
             "requirement",
             typeof(Requirement));

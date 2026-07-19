@@ -36,7 +36,7 @@ public class RequirementController(
             return BadRequest("Parameter 'a' (requirement UID) is required.");
         }
 
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         ConfigurationContext context;
         try
         {
@@ -192,7 +192,7 @@ public class RequirementController(
             return BadRequest("Parameter 'a' (requirement UID) is required.");
         }
 
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         ConfigurationContext context;
         try
         {
@@ -258,6 +258,9 @@ public class RequirementController(
         requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
         await linkSidecarService.ApplyLinksAsync(context, requirement, requirementUri, HttpContext.RequestAborted)
             .ConfigureAwait(false);
+
+        Response.Headers.Append("Link",
+            $"<{baseUrl}/oslc/shapes/requirement>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}instanceShape\"");
 
         return Ok(requirement);
     }

@@ -1,5 +1,4 @@
 using OSLC4Net.Core.Model;
-using OSLC4Net.Domains.ConfigurationManagement;
 using StrictDocOslcRm.Models;
 using ConfigurationBaseline = OSLC4Net.Domains.ConfigurationManagement.Baseline;
 using ConfigurationStream = OSLC4Net.Domains.ConfigurationManagement.Stream;
@@ -48,11 +47,11 @@ public static class ConfigurationResourceFactory
         IEnumerable<ConfigurationContext> baselines,
         string baseUrl) => new(
         new Uri(BaselinesContainerUri(baseUrl, branch)))
-    {
-        Members = baselines
+        {
+            Members = baselines
             .Select(context => new Uri(ConfigurationUri(baseUrl, context)))
             .ToList()
-    };
+        };
 
     public static GenericComponent CreateComponent(string baseUrl) => new(
         new Uri($"{baseUrl}/oslc_config/components/{ComponentId}"))

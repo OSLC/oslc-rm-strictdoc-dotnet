@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
-using OSLC4Net.Core;
 using OSLC4Net.Core.Model;
 using OSLC4Net.Core.Query;
 using StrictDocOslcRm.Models;

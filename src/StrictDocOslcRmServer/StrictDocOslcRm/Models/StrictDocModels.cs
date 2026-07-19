@@ -66,6 +66,9 @@ public class StrictDocRelation
 
     [JsonPropertyName("VALUE")]
     public string? Value { get; set; }
+
+    [JsonPropertyName("ROLE")]
+    public string? Role { get; set; }
 }
 
 /// <summary>

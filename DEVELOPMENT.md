@@ -1,5 +1,20 @@
 # Development guide
 
+## Regenerating demo data
+
+From the repository root, regenerate the StrictDoc JSON database and the
+matching SPDX and HTML artifacts after changing the demo `.sdoc` or `.sgra`
+files:
+
+```sh
+uvx strictdoc export src/hellow-requirements/ --output-dir src/hellow-requirements/output/ --formats json,spdx,html,reqif-sdoc
+```
+
+The configuration-enabled development server reads the selected snapshot under
+`src/hellow-requirements/output/{branch}/{tag}/strictdoc.json`; refresh that
+snapshot from the generated JSON as part of a demo-data change. Commit the
+regenerated demo artifacts together with their source changes.
+
 ## Local server
 
 Run the server from the application project:

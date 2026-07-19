@@ -7,7 +7,7 @@ matching SPDX and HTML artifacts after changing the demo `.sdoc` or `.sgra`
 files:
 
 ```sh
-uvx strictdoc export src/hellow-requirements/ --output-dir src/hellow-requirements/output/ --formats json,spdx,html
+uvx strictdoc export src/hellow-requirements/ --output-dir src/hellow-requirements/output/ --formats json,spdx,html,reqif-sdoc
 ```
 
 The development server reads

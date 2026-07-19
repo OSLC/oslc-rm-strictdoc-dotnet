@@ -5,6 +5,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="StrictDocOslcRm.AppHost/StrictDocOslcRm.AppHost.csproj" />
+  <Project Path="OSLC4Net.Server.Diagnostics/OSLC4Net.Server.Diagnostics.csproj" />
   <Project Path="StrictDocOslcRm/StrictDocOslcRm.csproj" />
   <Project Path="StrictDocOslcRm.Tests/StrictDocOslcRm.Tests.csproj" />
 </Solution>

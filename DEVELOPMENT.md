@@ -30,6 +30,39 @@ cd src/StrictDocOslcRmServer
 dotnet test --solution StrictDocOslcRm.slnx --no-restore
 ```
 
+## OSLC remote-integration diagnostics
+
+`OSLC4Net.Server.Diagnostics` logs every incoming HTTP request and completed
+response at .NET `Trace` level. The request event includes the method, public
+URL, `Configuration-Context`, `User-Agent`, `Accept`, content type, ASP.NET
+trace identifier, and OpenTelemetry trace ID. The response event includes the
+status and duration. A redirect additionally gets a one-line Trace event with
+its `Location` target.
+
+For exchanges that need raw evidence, configure the following section. When
+`CapturePayloads` is true, the server creates a timestamped pair of files for
+each 4xx/5xx response; `CaptureSuccessfulResponses` extends that to 2xx
+responses. Redirects are never written as payload captures.
+
+```json
+{
+  "OslcIntegrationDiagnostics": {
+    "CapturePayloads": true,
+    "CaptureSuccessfulResponses": false,
+    "CaptureDirectory": "/absolute/local/path/oslc-integration-diagnostics",
+    "IncludeSensitiveHeaders": false
+  }
+}
+```
+
+Each `*_req.log` and `*_resp.log` contains both ISO-8601 and Unix timestamps,
+the trace identifiers, headers, and the unmodified payload. Sensitive headers
+are redacted unless `IncludeSensitiveHeaders` is enabled. The development
+profile enables it for Jazz troubleshooting, so treat the capture directory as
+credential-bearing local data and do not commit or attach its files to issues.
+It also enables `Trace` only for the `OSLC4Net.Server.Diagnostics` logger
+category, without enabling framework-wide Trace logging.
+
 ## Deployment
 
 Locally:

@@ -1,4 +1,5 @@
 using OSLC4Net.Server.Providers;
+using OSLC4Net.Server.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -52,6 +53,7 @@ builder.Services.AddCors(options =>
 
 // Add HTTP context accessor for accessing request information in services
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddOslcIntegrationDiagnostics(builder.Configuration);
 
 // Add memory cache for StrictDoc data caching
 builder.Services.AddMemoryCache();
@@ -63,6 +65,7 @@ builder.Services.AddScoped<IBaseUrlService, BaseUrlService>();
 builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 builder.Services.AddSingleton<ILinkSidecarService, FileLinkSidecarService>();
 builder.Services.AddSingleton<IConfigurationContextService, FileConfigurationContextService>();
+builder.Services.AddSingleton<IConfigurationBaselineService, ConfigurationBaselineStandalone>();
 
 // Register OSLC Query evaluation service (oslc.where/select/orderBy/searchTerms/paging)
 builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
@@ -82,6 +85,8 @@ if (PublicBaseUri.TryGetConfigured(builder.Configuration, out var publicBaseUri)
         return next();
     });
 }
+
+app.UseOslcIntegrationDiagnostics();
 
 app.Use((context, next) =>
 {

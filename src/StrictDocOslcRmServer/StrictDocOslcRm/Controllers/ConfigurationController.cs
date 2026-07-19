@@ -12,7 +12,8 @@ namespace StrictDocOslcRm.Controllers;
 [Produces("application/rdf+xml", "text/turtle", "application/ld+json", "text/html")]
 public sealed class ConfigurationController(
     IBaseUrlService baseUrlService,
-    IConfigurationContextService configurationContextService) : Controller
+    IConfigurationContextService configurationContextService,
+    IConfigurationBaselineService configurationBaselineService) : Controller
 {
     [HttpGet("components/{componentId}")]
     public IActionResult GetComponent(string componentId)
@@ -65,6 +66,33 @@ public sealed class ConfigurationController(
     {
         Response.Headers.Allow = "GET, HEAD, OPTIONS";
         return Ok();
+    }
+
+    /// <summary>
+    /// Publishes an immutable local baseline by snapshotting the branch's current HEAD export.
+    /// </summary>
+    [HttpPost("configurations/{branch}/baselines/{tag}")]
+    public async Task<IActionResult> CreateBaseline(string branch, string tag)
+    {
+        try
+        {
+            var result = await configurationBaselineService.CreateAsync(branch, tag, HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+            var resource = ConfigurationResourceFactory.CreateConfiguration(result.Baseline, baseUrlService.GetBaseUrl());
+            return CreatedAtAction(nameof(GetConfiguration), new { branch, tag }, resource);
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+        catch (ConfigurationContextNotFoundException exception)
+        {
+            return NotFound(exception.Message);
+        }
+        catch (BaselineAlreadyExistsException exception)
+        {
+            return Conflict(exception.Message);
+        }
     }
 
     [HttpGet("configurations/query")]

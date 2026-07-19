@@ -961,9 +961,25 @@ published provider. StrictDoc should initially:
 - advertise no creation factory until it can atomically publish JSON and
   sidecar pairs;
 - return a read-only generic Configuration representation;
-- use an external publication process to create a new baseline directory; and
-- add POST stream/baseline and configuration metadata PUT only as a later
-  transaction feature.
+- use the standalone baseline-publication service to create a new baseline
+  directory from a stream's `HEAD` snapshot; and
+- add a standards-advertised POST creation factory, stream/baseline metadata
+  PUT, and remote Git publication only after their Jazz flows are observed.
+
+The initial internal HTTP surface is deliberately narrow:
+
+```
+POST /oslc_config/configurations/{branch}/baselines/{tag}
+```
+
+It invokes `IConfigurationBaselineService`; the current
+`ConfigurationBaselineStandalone` implementation stages a complete local
+snapshot, copies `strictdoc.json` and `sidecar.json` from `{branch}/HEAD`, and
+atomically moves it to `{branch}/{tag}`. It returns `409 Conflict` rather than
+overwriting a published tag. The interface is the seam for the later Git tag,
+remote push, and release-export download workflow. This endpoint is not an
+advertised OSLC CreationFactory yet, so it must not be treated as evidence of
+Jazz baseline-creation conformance.
 
 This is safe only if GCM can enumerate and select existing configurations. It
 must be validated through the actual Jazz picker/contribution flow before the
@@ -999,9 +1015,11 @@ Required file behavior:
 - make a request see either the old complete snapshot or the new complete
   snapshot, never one file from each publication.
 
-Baseline publication should write to a staging directory, validate the JSON,
-sidecar, requirement UIDs, and RDF closure, calculate the snapshot revision,
-then atomically rename the complete `{branch}/{tag}` directory into place.
+Baseline publication writes to a staging directory and atomically renames the
+complete `{branch}/{tag}` directory into place. The current standalone flow
+copies the complete local snapshot; JSON, requirement-UID, and RDF-closure
+validation remains a required hardening step before it is used for remotely
+published release artifacts.
 
 When a stream produces a baseline, copy the stream sidecar as part of the
 same snapshot operation. Future stream changes must not mutate the baseline

@@ -32,7 +32,25 @@ sdoc-node-content {
 
   /* and use overflow-wrap: break-word; in the field */
   max-width: 100%;
-  overflow-x: auto;
+
+  /*
+    DEV: to show anchors (in the context) to the left of the node,
+    need to remove this:
+    overflow-x: auto;
+   */
+}
+
+/* Workaround for html2pdf4doc print bug:
+  (https://github.com/strictdoc-project/strictdoc/issues/2450#issuecomment-3299134769)
+   Disable background for elements that trigger header/footer overlap.
+   This hides the background of problematic split (not sliced) sections
+   to prevent them from covering header/footer areas during printing.
+   Real fix will be applied in html2pdf4doc in a future release. */
+@media print {
+  sdoc-node-content {
+    background: none;
+    background-color: transparent;
+  }
 }
 
 sdoc-node-title {
@@ -115,10 +133,9 @@ sdoc-node-field-label {
   font-family: var(--code-font-family);
   font-weight: 500;
   line-height: 1;
-  text-transform: uppercase;
   color: var(--requirement-label-color);
 
-  /* @mettta and @stanislaw are commenting this out because the REQUIREMENT's field names
+  /* @mettta and @stanislaw are commenting this out because REQUIREMENT's field names
      were split apart, even though there was enough screen width
     word-break: break-word;
   */
@@ -406,7 +423,18 @@ sdoc-section-text:first-child {
 
 sdoc-meta {
   display: grid;
-  grid-template-columns: minmax(min-content, max-content) minmax(min-content, 1fr);
+  /*
+   * Four-column layout:
+   * [move button] [key] [value] [delete button]
+   *
+   * Row controls live in dedicated side columns.
+   * It can also be used with only two columns:
+   *     sdoc-meta-label, sdoc-meta-field
+   */
+  grid-template-columns:  minmax(min-content, max-content)
+                          minmax(min-content, max-content)
+                          minmax(min-content, 1fr)
+                          minmax(min-content, max-content);
   place-items: stretch stretch;
   place-content: stretch stretch;
   position: relative;
@@ -428,6 +456,17 @@ sdoc-meta {
   overflow-x: auto;
 }
 
+sdoc-meta-row {
+  /*
+   * Row-level container needed for :has()-based interactions between
+   * control buttons and key/value cells, while preserving the shared
+   * column sizing defined by the parent grid (sdoc-meta).
+   */
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
 sdoc-meta-section,
 sdoc-meta-label,
 sdoc-meta-field {
@@ -438,7 +477,7 @@ sdoc-meta-field {
 }
 
 sdoc-meta-label {
-  grid-column: 1 / 2;
+  grid-column: 2 / 3;
   font-family: var(--code-font-family);
   font-weight: 700;
   text-transform: uppercase;
@@ -447,7 +486,7 @@ sdoc-meta-label {
 }
 
 sdoc-meta-field {
-  grid-column: 2 / 3;
+  grid-column: 3 / 4;
 }
 
 sdoc-meta-section {

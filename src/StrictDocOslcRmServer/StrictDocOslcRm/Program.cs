@@ -4,6 +4,11 @@ using StrictDocOslcRm.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// REVISIT: Replace the toy OAuth1 provider with a production OAuth consumer
+// registry/token implementation, or delegate authentication to the deployment
+// boundary once Jazz interop no longer depends on this in-process compatibility shim.
+builder.Services.AddToyOAuth1(builder.Configuration);
+
 // Add services to the container (controllers + views for Razor selection dialog)
 builder.Services.AddControllersWithViews(o => o.OutputFormatters.Insert(0, new OslcRdfOutputFormatter()));
 
@@ -35,6 +40,9 @@ builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
+app.MapToyOAuth1Provider();
 
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())

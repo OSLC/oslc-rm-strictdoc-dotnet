@@ -1,19 +1,112 @@
 [DOCUMENT]
-TITLE: StrictDoc
+TITLE: StrictDoc OSLC RM demo
 ROOT: True
 OPTIONS:
   ENABLE_MID: True
 
-[REQUIREMENT]
-UID: SDOC-HIGH-REQS-MANAGEMENT
-TITLE: Requirements management
-STATEMENT: StrictDoc shall enable requirements management.
+[GRAMMAR]
+IMPORT_FROM_FILE: grammar.sgra
 
 [REQUIREMENT]
-UID: SDOC-HIGH-REQS-DECOMP
-TITLE: Requirements decomposition
-STATEMENT: StrictDoc shall support requirement decomposition.
+UID: SDOC-JAZZ-INTEGRATION
+TITLE: Jazz integration
+STATEMENT: The StrictDoc OSLC RM server shall interoperate with Jazz as an OSLC RM 2.0 provider.
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-ROOT-SERVICES
+TITLE: Root services discovery
+STATEMENT: The server shall publish an RDF/XML OSLC root-services document that advertises the RM service-provider catalog and Jazz OSLC catalog descriptor.
 RELATIONS:
 - TYPE: Parent
-  VALUE: SDOC-HIGH-REQS-MANAGEMENT
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Decomposes
 
+[REQUIREMENT]
+UID: SDOC-JAZZ-SERVICE-PROVIDER
+TITLE: Service provider catalog
+STATEMENT: The server shall expose an RM service-provider catalog that lists the StrictDoc document service providers and their RM domain.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Decomposed by
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-INSTANCE-SHAPE
+TITLE: Requirement instance shape
+STATEMENT: Each requirement representation shall advertise a provider-owned OSLC RM instance shape that describes its writable link properties.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Elaborates
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-QUERY-SHAPE
+TITLE: Query capability resource shape
+STATEMENT: The RM query capability shall advertise the same requirement resource shape that individual requirement representations use.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Elaborated by
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-OAUTH
+TITLE: OAuth 1.0a discovery
+STATEMENT: Root services shall advertise OAuth 1.0a consumer registration, request-token, authorization, and access-token endpoints compatible with Jazz.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Specifies
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-PUBLIC-URI
+TITLE: Public resource identity
+STATEMENT: Discovery, catalog, service-provider, dialog, shape, OAuth, and requirement links shall use the externally visible HTTPS origin.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Specified by
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-RDF
+TITLE: RDF representations
+STATEMENT: The server shall serve OSLC resource representations through RDF content negotiation and include OSLC-Core-Version 2.0.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Constrains
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-LINK-UPDATES
+TITLE: Writable link updates
+STATEMENT: The provider shall accept Jazz updates to provider-owned requirement links and return a response that Jazz recognizes as a successful save.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Constrained by
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-RM-RELATIONS
+TITLE: OSLC RM relation mapping
+STATEMENT: The server shall map StrictDoc Decomposes, Elaborates, Specifies, Constrains, and Satisfies roles to their corresponding OSLC RM properties.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Satisfies
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-INVERSE-RELATIONS
+TITLE: Inverse relation projection
+STATEMENT: The server shall add the OSLC RM inverse relation to target requirements when reading a StrictDoc JSON export.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-INTEGRATION
+  ROLE: Satisfied by
+
+[REQUIREMENT]
+UID: SDOC-JAZZ-STABLE-LINKS
+TITLE: Stable requirement links
+STATEMENT: Requirement relation targets shall use stable public requirement URIs so Jazz can navigate and retain links.
+RELATIONS:
+- TYPE: Parent
+  VALUE: SDOC-JAZZ-RM-RELATIONS
+  ROLE: Decomposes

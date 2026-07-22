@@ -62,6 +62,11 @@ public class RequirementControllerTests : IAsyncDisposable
 
         // Assert
         var okResult = result as OkObjectResult;
+        var returnedRequirement = okResult?.Value as Requirement;
+        await Assert.That(returnedRequirement?.InstanceShape)
+            .IsEqualTo(new Uri($"{baseUrl}/oslc/shapes/requirement"));
+        await Assert.That(_controller.Response.Headers.Link.ToString())
+            .Contains($"<{baseUrl}/oslc/shapes/requirement>; rel=\"http://open-services.net/ns/core#instanceShape\"");
         await Verify(okResult?.Value).ConfigureAwait(false);
     }
 }

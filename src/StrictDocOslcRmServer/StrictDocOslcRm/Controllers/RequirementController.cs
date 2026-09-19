@@ -34,8 +34,7 @@ public class RequirementController(
         }
 
         var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
-        var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);
-        var requirement = allRequirements.FirstOrDefault(r => string.Equals(r.Identifier, a, StringComparison.Ordinal));
+        var requirement = await strictDocService.GetRequirementByUidAsync(a);
 
         if (requirement == null)
         {

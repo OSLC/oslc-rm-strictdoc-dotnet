@@ -1,9 +1,16 @@
+using System.IO;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using OSLC4Net.Domains.RequirementsManagement;
 using StrictDocOslcRm.Controllers;
+using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Tests;
@@ -68,5 +75,50 @@ public class RequirementControllerTests : IAsyncDisposable
         await Assert.That(_controller.Response.Headers.Link.ToString())
             .Contains($"<{baseUrl}/oslc/shapes/requirement>; rel=\"http://open-services.net/ns/core#instanceShape\"");
         await Verify(okResult?.Value).ConfigureAwait(false);
+    }
+
+    [Test]
+    [Arguments("small", "SmallPreview.cshtml")]
+    [Arguments("large", "LargePreview.cshtml")]
+    public async Task GetRequirementResource_PreviewType_RendersHtmlWithEncodedXssPayloads(string previewType, string viewFileName)
+    {
+        // Arrange
+        var uid = "REQ-XSS";
+        var baseUrl = "http://localhost:8080";
+        _baseUrlService.GetBaseUrl().Returns(baseUrl);
+        _controller.Request.Headers.Accept = "text/html";
+
+        var xssPayloadTitle = "<script>alert('xss-title')</script>";
+        var xssPayloadDesc = "<img src=x onerror=alert('xss-desc')>";
+
+        var requirement = new Requirement
+        {
+            Identifier = uid,
+            Title = xssPayloadTitle,
+            Description = xssPayloadDesc
+        };
+        _strictDocService.GetAllRequirementsAsync(baseUrl).Returns(new List<Requirement> { requirement });
+
+        // Act
+        var result = await _controller.GetRequirementResource(uid, null, previewType).ConfigureAwait(false);
+
+        // Assert
+        var viewResult = result as ViewResult;
+        await Assert.That(viewResult).IsNotNull();
+        await Assert.That(viewResult!.Model).IsTypeOf<RequirementPreviewViewModel>();
+
+        var model = (RequirementPreviewViewModel)viewResult.Model!;
+        await Assert.That(model.Requirement.Title).IsEqualTo(xssPayloadTitle);
+        await Assert.That(model.Requirement.Description).IsEqualTo(xssPayloadDesc);
+
+        // Verify Razor view rendering encodes HTML tags by checking the compiled Razor file template logic
+        var cshtmlPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "StrictDocOslcRm", "Views", "Requirement", viewFileName);
+        var cshtmlContent = await File.ReadAllTextAsync(cshtmlPath);
+
+        // Ensure Html.Raw is not used for Title or Description in the preview views
+        await Assert.That(cshtmlContent).DoesNotContain("@Html.Raw(Model.Requirement.Title)");
+        await Assert.That(cshtmlContent).DoesNotContain("@Html.Raw(Model.Requirement.Description)");
+        await Assert.That(cshtmlContent).Contains("@Model.Requirement.Title");
+        await Assert.That(cshtmlContent).Contains("@Model.Requirement.Description");
     }
 }

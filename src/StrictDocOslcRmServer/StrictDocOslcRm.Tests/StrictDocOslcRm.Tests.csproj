@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="OSLC4Net.Core" />
     <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider"/>

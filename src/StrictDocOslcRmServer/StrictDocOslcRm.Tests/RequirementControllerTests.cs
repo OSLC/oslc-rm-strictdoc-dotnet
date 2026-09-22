@@ -55,7 +55,7 @@ public class RequirementControllerTests : IAsyncDisposable
             Title = "Test Requirement",
             Description = "This is a test requirement"
         };
-        _strictDocService.GetAllRequirementsAsync(baseUrl).Returns(new List<Requirement> { requirement });
+        _strictDocService.GetRequirementByUidAsync(uid).Returns(requirement);
 
         // Act
         var result = await _controller.GetRequirementResource(uid, null, null).ConfigureAwait(false);

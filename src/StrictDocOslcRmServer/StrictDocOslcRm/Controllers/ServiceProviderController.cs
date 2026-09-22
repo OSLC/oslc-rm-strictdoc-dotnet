@@ -206,10 +206,10 @@ public class ServiceProviderController(
         IEnumerable<Requirement> filtered = requirements;
         if (!string.IsNullOrWhiteSpace(terms))
         {
-            var termLower = terms.Trim().ToLowerInvariant();
+            var trimmedTerms = terms.Trim();
             filtered = requirements.Where(r =>
-                (r.Title ?? string.Empty).ToLowerInvariant().Contains(termLower) ||
-                (r.Identifier ?? string.Empty).ToLowerInvariant().Contains(termLower));
+                (r.Title != null && r.Title.Contains(trimmedTerms, StringComparison.OrdinalIgnoreCase)) ||
+                (r.Identifier != null && r.Identifier.Contains(trimmedTerms, StringComparison.OrdinalIgnoreCase)));
         }
 
         var isHtmx = Request.Headers.ContainsKey("HX-Request") || Request.Headers.ContainsKey("hx-request");

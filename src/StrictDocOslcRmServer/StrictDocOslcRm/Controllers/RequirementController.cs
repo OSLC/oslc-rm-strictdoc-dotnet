@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
 using StrictDocOslcRm.Models;
 using StrictDocOslcRm.Services;
+using Compact = StrictDocOslcRm.Models.Compact;
+using Preview = StrictDocOslcRm.Models.Preview;
 
 namespace StrictDocOslcRm.Controllers;
 
@@ -39,7 +41,7 @@ public class RequirementController(
             return BadRequest("Parameter 'a' (requirement UID) is required.");
         }
 
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var allRequirements = await strictDocService.GetAllRequirementsAsync(baseUrl);
         var requirement = allRequirements.FirstOrDefault(r =>
             string.Equals(r.Identifier, a, StringComparison.Ordinal)
@@ -119,20 +121,20 @@ public class RequirementController(
                     "Client prefers plain JSON for compact resource, returning OSLC 3.0 Compact JSON shape"
                 );
 
-                var compactDto = new CompactDto
+                var compactDto = new Compact
                 {
                     Title = requirement.Title ?? requirement.Identifier,
                     ShortTitle = requirement.Identifier,
                     Icon = iconUri,
                     IconTitle = "Requirement",
                     IconAltLabel = "Requirement",
-                    SmallPreview = new PreviewDto
+                    SmallPreview = new Preview
                     {
                         Document = smallDoc,
                         HintWidth = "320px",
                         HintHeight = "200px",
                     },
-                    LargePreview = new PreviewDto
+                    LargePreview = new Preview
                     {
                         Document = largeDoc,
                         HintWidth = "600px",
@@ -144,7 +146,8 @@ public class RequirementController(
             }
 
             // Otherwise, return RDF/LD-friendly Compact resource
-            var compactResource = new Compact(new Uri($"{requirementUri}&compact"));
+            var compactResource = new Compact();
+            compactResource.SetAbout(new Uri($"{requirementUri}&compact"));
             compactResource.Title = requirement.Title ?? requirement.Identifier ?? "";
             compactResource.ShortTitle = requirement.Identifier ?? "";
             compactResource.Icon = new Uri(iconUri);
@@ -170,11 +173,16 @@ public class RequirementController(
 
         // Handle regular Requirement resource request
         requirement.SetAbout(new Uri(requirementUri));
+        requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
 
         // Add Link header for Compact resource (OSLC Resource Preview spec)
         Response.Headers.Append(
             "Link",
             $"<{requirementUri}&compact>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}Compact\""
+        );
+        Response.Headers.Append(
+            "Link",
+            $"<{baseUrl}/oslc/shapes/requirement>; rel=\"{OslcConstants.OSLC_CORE_NAMESPACE}instanceShape\""
         );
 
         return Ok(requirement);

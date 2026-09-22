@@ -90,8 +90,14 @@ public class StrictDocService : IStrictDocService
             return new List<Requirement>();
         }
 
-        // Extract requirements only from this specific document
-        var requirements = ExtractRequirementsFromNodes(targetDocument.Nodes, targetDocument.Mid, targetDocument.Title, baseUrl);
+        var targetUids = FlattenRequirementNodes(targetDocument.Nodes)
+            .Select(node => node.Uid!)
+            .ToHashSet(StringComparer.Ordinal);
+        var requirements = ExtractRequirementsFromNodes(
+                documents.SelectMany(document => document.Nodes).ToList(),
+                baseUrl)
+            .Where(requirement => requirement.Identifier is not null && targetUids.Contains(requirement.Identifier))
+            .ToList();
         _logger.LogInformation("Found {Count} requirements for document {DocumentMid} ({Title})",
             requirements.Count, documentMid, targetDocument.Title);
 
@@ -108,13 +114,9 @@ public class StrictDocService : IStrictDocService
         }
 
         var documents = await GetDocumentsAsync().ConfigureAwait(false);
-        var requirements = new List<Requirement>();
-
-        foreach (var document in documents)
-        {
-            var docRequirements = ExtractRequirementsFromNodes(document.Nodes, document.Mid, document.Title, baseUrl);
-            requirements.AddRange(docRequirements);
-        }
+        var requirements = ExtractRequirementsFromNodes(
+            documents.SelectMany(document => document.Nodes).ToList(),
+            baseUrl);
 
         _cache.Set(cacheKey, requirements, TimeSpan.FromHours(1));
         return requirements;
@@ -146,35 +148,111 @@ public class StrictDocService : IStrictDocService
         }
     }
 
-    private List<Requirement> ExtractRequirementsFromNodes(List<StrictDocNode> nodes, string documentMid, string documentTitle, string? baseUrl = null)
+    private static List<Requirement> ExtractRequirementsFromNodes(
+        List<StrictDocNode> nodes, string? baseUrl = null)
     {
-        var requirements = new List<Requirement>();
+        var requirementNodes = FlattenRequirementNodes(nodes).ToList();
+        var requirementsByUid = requirementNodes.ToDictionary(
+            node => node.Uid!,
+            CreateRequirementFromNode,
+            StringComparer.Ordinal);
 
-        foreach (var node in nodes)
+        foreach (var sourceNode in requirementNodes)
         {
-            if (string.Equals(node.NodeType, StrictDocNodeTypes.Requirement, StringComparison.Ordinal) && !string.IsNullOrEmpty(node.Uid))
+            var source = requirementsByUid[sourceNode.Uid!];
+            foreach (var relation in sourceNode.Relations ?? [])
             {
-                var requirement = CreateRequirementFromNode(node, baseUrl);
-                requirements.Add(requirement);
-            }
-            else if (string.Equals(node.NodeType, StrictDocNodeTypes.CompositeRequirement, StringComparison.Ordinal))
-            {
-                // TODO: Implement RequirementCollection mapping
-                _logger.LogInformation("Composite requirement found but not yet implemented: {Title}", node.Title);
-            }
+                if (!relation.Type.Equals(StrictDocRelationTypes.Parent, StringComparison.OrdinalIgnoreCase) ||
+                    string.IsNullOrWhiteSpace(relation.Value))
+                {
+                    continue;
+                }
 
-            // Recursively process child nodes
-            if (node.Nodes != null)
-            {
-                var childRequirements = ExtractRequirementsFromNodes(node.Nodes, documentMid, documentTitle, baseUrl);
-                requirements.AddRange(childRequirements);
+                var targetUid = relation.Value.Trim();
+                requirementsByUid.TryGetValue(targetUid, out var target);
+                ApplyRmRelation(source, target, targetUid, relation.Role, baseUrl);
             }
         }
 
-        return requirements;
+        return requirementNodes.Select(node => requirementsByUid[node.Uid!]).ToList();
     }
 
-    private static Requirement CreateRequirementFromNode(StrictDocNode node, string? baseUrl = null)
+    private static IEnumerable<StrictDocNode> FlattenRequirementNodes(IEnumerable<StrictDocNode> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (string.Equals(node.NodeType, StrictDocNodeTypes.Requirement, StringComparison.Ordinal) &&
+                !string.IsNullOrWhiteSpace(node.Uid))
+            {
+                yield return node;
+            }
+
+            if (node.Nodes is not null)
+            {
+                foreach (var child in FlattenRequirementNodes(node.Nodes))
+                {
+                    yield return child;
+                }
+            }
+        }
+    }
+
+    private static void ApplyRmRelation(Requirement source, Requirement? target, string targetUid,
+        string? role, string? baseUrl)
+    {
+        var sourceUri = RequirementUri(source.Identifier!, baseUrl);
+        var targetUri = RequirementUri(targetUid, baseUrl);
+        switch (role?.Trim().ToLowerInvariant())
+        {
+            case null:
+            case "":
+            case "decomposes":
+                source.Decomposes.Add(targetUri);
+                target?.DecomposedBy.Add(sourceUri);
+                break;
+            case "decomposed by":
+                source.DecomposedBy.Add(targetUri);
+                target?.Decomposes.Add(sourceUri);
+                break;
+            case "elaborates":
+                source.Elaborates.Add(targetUri);
+                target?.ElaboratedBy.Add(sourceUri);
+                break;
+            case "elaborated by":
+                source.ElaboratedBy.Add(targetUri);
+                target?.Elaborates.Add(sourceUri);
+                break;
+            case "specifies":
+                source.Specifies.Add(targetUri);
+                target?.SpecifiedBy.Add(sourceUri);
+                break;
+            case "specified by":
+                source.SpecifiedBy.Add(targetUri);
+                target?.Specifies.Add(sourceUri);
+                break;
+            case "constrains":
+                source.Constrains.Add(targetUri);
+                target?.ConstrainedBy.Add(sourceUri);
+                break;
+            case "constrained by":
+                source.ConstrainedBy.Add(targetUri);
+                target?.Constrains.Add(sourceUri);
+                break;
+            case "satisfies":
+                source.Satisfies.Add(targetUri);
+                target?.SatisfiedBy.Add(sourceUri);
+                break;
+            case "satisfied by":
+                source.SatisfiedBy.Add(targetUri);
+                target?.Satisfies.Add(sourceUri);
+                break;
+        }
+    }
+
+    private static Uri RequirementUri(string uid, string? baseUrl) =>
+        new($"{baseUrl ?? "http://strictdoc.local"}/?a={Uri.EscapeDataString(uid)}");
+
+    private static Requirement CreateRequirementFromNode(StrictDocNode node)
     {
         var requirement = new Requirement();
 
@@ -186,36 +264,6 @@ public class StrictDocService : IStrictDocService
 
         // Map STATEMENT to Description
         requirement.Description = node.Statement ?? "No Description";
-
-        // Process RELATIONS with type PARENT to Decomposes property
-        if (node.Relations != null)
-        {
-            var parentRelations = node.Relations
-                .Where(r => r.Type.Equals(StrictDocRelationTypes.Parent, StringComparison.OrdinalIgnoreCase))
-                .Select(r => r.Value)
-                .Where(v => !string.IsNullOrEmpty(v))
-                .ToList();
-
-            if (parentRelations.Any())
-            {
-                // Set Decomposes property with parent requirement URIs using new format
-                var decomposes = parentRelations
-                    .Select(parentUid =>
-                    {
-                        if (!string.IsNullOrEmpty(baseUrl))
-                        {
-                            return new Uri($"{baseUrl}/?a={parentUid}");
-                        }
-                        else
-                        {
-                            // Fallback to old format if baseUrl not provided
-                            return new Uri($"http://strictdoc.local/?a={parentUid}");
-                        }
-                    })
-                    .ToArray();
-                requirement.Decomposes = [.. decomposes];
-            }
-        }
 
         return requirement;
     }

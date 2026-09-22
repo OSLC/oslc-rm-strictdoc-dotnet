@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace StrictDocOslcRm.Middleware;
 
 public class SecurityHeadersMiddleware(RequestDelegate next)

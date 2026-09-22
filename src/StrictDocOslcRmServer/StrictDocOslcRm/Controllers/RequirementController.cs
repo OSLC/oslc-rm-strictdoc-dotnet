@@ -15,7 +15,8 @@ namespace StrictDocOslcRm.Controllers;
 public class RequirementController(
     ILogger<RequirementController> logger,
     IBaseUrlService baseUrlService,
-    IStrictDocService strictDocService) : Controller
+    IStrictDocService strictDocService,
+    IRequirementMarkupSanitizer requirementMarkupSanitizer) : Controller
 {
     /// <summary>
     /// Unified endpoint for requirement resources, compact resources, and HTML previews.
@@ -57,7 +58,9 @@ public class RequirementController(
             var model = new RequirementPreviewViewModel
             {
                 Requirement = requirement,
-                RequirementUri = requirementUri
+                RequirementUri = requirementUri,
+                SanitizedTitle = requirementMarkupSanitizer.SanitizeTitle(requirement.Title),
+                SanitizedDescription = requirementMarkupSanitizer.SanitizeDescription(requirement.Description)
             };
 
             return preview.ToLower() switch

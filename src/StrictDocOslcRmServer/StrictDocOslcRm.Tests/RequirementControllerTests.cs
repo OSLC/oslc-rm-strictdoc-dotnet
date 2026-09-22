@@ -15,14 +15,16 @@ public class RequirementControllerTests : IAsyncDisposable
     private readonly IStrictDocService _strictDocService;
     private readonly IBaseUrlService _baseUrlService;
     private readonly ILogger<RequirementController> _logger;
+    private readonly IRequirementMarkupSanitizer _requirementMarkupSanitizer;
 
     public RequirementControllerTests()
     {
         _strictDocService = Substitute.For<IStrictDocService>();
         _baseUrlService = Substitute.For<IBaseUrlService>();
         _logger = Substitute.For<ILogger<RequirementController>>();
+        _requirementMarkupSanitizer = new RequirementMarkupSanitizer();
 
-        _controller = new RequirementController(_logger, _baseUrlService, _strictDocService);
+        _controller = new RequirementController(_logger, _baseUrlService, _strictDocService, _requirementMarkupSanitizer);
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -72,9 +74,9 @@ public class RequirementControllerTests : IAsyncDisposable
     }
 
     [Test]
-    [Arguments("small", "SmallPreview.cshtml")]
-    [Arguments("large", "LargePreview.cshtml")]
-    public async Task GetRequirementResource_PreviewType_RendersHtmlWithEncodedXssPayloads(string previewType, string viewFileName)
+    [Arguments("small")]
+    [Arguments("large")]
+    public async Task GetRequirementResource_PreviewType_SanitizesXssPayloads(string previewType)
     {
         // Arrange
         var uid = "REQ-XSS";
@@ -105,14 +107,8 @@ public class RequirementControllerTests : IAsyncDisposable
         await Assert.That(model.Requirement.Title).IsEqualTo(xssPayloadTitle);
         await Assert.That(model.Requirement.Description).IsEqualTo(xssPayloadDesc);
 
-        // Verify Razor view rendering encodes HTML tags by checking the compiled Razor file template logic
-        var cshtmlPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "StrictDocOslcRm", "Views", "Requirement", viewFileName);
-        var cshtmlContent = await File.ReadAllTextAsync(cshtmlPath);
-
-        // Ensure Html.Raw is not used for Title or Description in the preview views
-        await Assert.That(cshtmlContent).DoesNotContain("@Html.Raw(Model.Requirement.Title)");
-        await Assert.That(cshtmlContent).DoesNotContain("@Html.Raw(Model.Requirement.Description)");
-        await Assert.That(cshtmlContent).Contains("@Model.Requirement.Title");
-        await Assert.That(cshtmlContent).Contains("@Model.Requirement.Description");
+        await Assert.That(model.SanitizedTitle.ToString()).DoesNotContain("<script");
+        await Assert.That(model.SanitizedDescription.ToString()).DoesNotContain("<img");
+        await Assert.That(model.SanitizedDescription.ToString()).DoesNotContain("onerror");
     }
 }

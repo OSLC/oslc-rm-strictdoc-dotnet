@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="OSLC4Net.Core.DotNetRdfProvider"  />
     <PackageReference Include="OSLC4Net.Core.Query"  />
     <PackageReference Include="OSLC4Net.Server.Providers"  />

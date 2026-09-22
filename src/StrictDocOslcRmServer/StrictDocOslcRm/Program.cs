@@ -42,6 +42,14 @@ builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
 // Add Anti-Forgery service for CSRF protection on HTML form endpoints
 builder.Services.AddAntiforgery();
 
+// Configure HSTS options
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -57,6 +65,9 @@ else
 {
     app.UseDeveloperExceptionPage();
 }
+
+// Add security headers middleware
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 //
 // app.UseHttpsRedirection();
@@ -75,3 +86,5 @@ app.UseRouting();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.1-alpine3.24 AS build
 ARG TARGETARCH
 WORKDIR /src
 
@@ -15,7 +15,7 @@ RUN DOTNET_ARCH="$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "$TARGETARC
     dotnet publish "StrictDocOslcRm.csproj" -c Release -o /app/publish --self-contained -r "linux-musl-$DOTNET_ARCH" --no-restore /p:DebugType=None /p:DebugSymbols=false
 
 # -extra adds full support for Unicode and timezones
-FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine-extra AS runtime
+FROM mcr.microsoft.com/dotnet/runtime-deps:11.0.0-rc.1-alpine3.24-extra AS runtime
 
 LABEL org.opencontainers.image.title="OSLC RM server for StrictDoc"
 LABEL org.opencontainers.image.description="OSLC server for StrictDoc in the Requirements Management domain"

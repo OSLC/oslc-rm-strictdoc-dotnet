@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.1-alpine3.24 AS build
 ARG TARGETARCH
 RUN apk add --no-cache binutils build-base clang openssl-dev zlib-dev
 WORKDIR /src
@@ -13,7 +13,7 @@ RUN case "$TARGETARCH" in \
     dotnet publish "OSLC4Net.Server.LogRelay/OSLC4Net.Server.LogRelay.csproj" \
       -c Release -r "$rid" --self-contained true -o /out
 
-FROM alpine:3.22
+FROM alpine:3.24
 RUN addgroup -S relay && adduser -S -G relay relay
 WORKDIR /app
 COPY --from=build /out/ ./

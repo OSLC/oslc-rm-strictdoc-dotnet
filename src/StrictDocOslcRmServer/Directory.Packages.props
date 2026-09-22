@@ -4,7 +4,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotnetRuntimeVersion>10.0.9</DotnetRuntimeVersion>
+    <DotnetRuntimeVersion>11.0.0-rc.1.26425.128</DotnetRuntimeVersion>
     <Oslc4NetVersion>0.7.0-preview.8</Oslc4NetVersion>
   </PropertyGroup>
   <ItemGroup>

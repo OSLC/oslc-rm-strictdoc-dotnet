@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.HttpOverrides;
 
 public static class ToyOAuth1AspNetExtensions
@@ -67,7 +68,8 @@ public static class ToyOAuth1AspNetExtensions
 
         endpoints.MapPost(prefix + "/request_token", RequestTokenAsync);
         endpoints.MapGet(authorizePath,
-            (HttpRequest req, OAuthStore store) => AuthorizePage(req, store, authorizePath));
+            (HttpRequest req, HttpContext ctx, OAuthStore store, IAntiforgery antiforgery) =>
+                AuthorizePage(req, ctx, store, antiforgery, authorizePath));
         endpoints.MapPost(authorizePath, AuthorizeDecisionAsync);
         endpoints.MapPost(prefix + "/access_token", AccessTokenAsync);
 
@@ -124,7 +126,8 @@ public static class ToyOAuth1AspNetExtensions
         }), "application/x-www-form-urlencoded");
     }
 
-    private static IResult AuthorizePage(HttpRequest req, OAuthStore store, string authorizePath)
+    private static IResult AuthorizePage(HttpRequest req, HttpContext httpContext, OAuthStore store,
+        IAntiforgery antiforgery, string authorizePath)
     {
         var token = req.Query["oauth_token"].ToString();
         if (string.IsNullOrWhiteSpace(token))
@@ -141,16 +144,24 @@ public static class ToyOAuth1AspNetExtensions
 
             var client = store.Data.Clients.FirstOrDefault(c =>
                 string.Equals(c.Key, rt.ConsumerKey, StringComparison.Ordinal));
-            return Results.Content(RenderApprovalPage(authorizePath, token, rt, client),
+            var tokens = antiforgery.GetAndStoreTokens(httpContext);
+            return Results.Content(
+                RenderApprovalPage(authorizePath, token, rt, client, tokens.FormFieldName, tokens.RequestToken!),
                 "text/html");
         }
     }
 
-    private static async Task<IResult> AuthorizeDecisionAsync(HttpRequest req, OAuthStore store)
+    private static async Task<IResult> AuthorizeDecisionAsync(HttpRequest req, HttpContext httpContext,
+        OAuthStore store, IAntiforgery antiforgery)
     {
         if (!req.HasFormContentType)
         {
             return Results.BadRequest("expected application/x-www-form-urlencoded");
+        }
+
+        if (!await antiforgery.IsRequestValidAsync(httpContext).ConfigureAwait(false))
+        {
+            return Results.BadRequest("CSRF validation failed");
         }
 
         var form = await req.ReadFormAsync().ConfigureAwait(false);
@@ -275,7 +286,7 @@ public static class ToyOAuth1AspNetExtensions
     }
 
     private static string RenderApprovalPage(string action, string token, RequestToken rt,
-        Client? client)
+        Client? client, string antiForgeryFieldName, string antiForgeryTokenValue)
     {
         var clientName = string.IsNullOrWhiteSpace(client?.Name) ? rt.ConsumerKey : client!.Name;
         return $$"""
@@ -308,6 +319,7 @@ public static class ToyOAuth1AspNetExtensions
                        <dt>Callback</dt><dd><code>{{H(rt.Callback)}}</code></dd>
                      </dl>
                      <form method="post" action="{{H(action)}}">
+                       <input type="hidden" name="{{H(antiForgeryFieldName)}}" value="{{H(antiForgeryTokenValue)}}">
                        <input type="hidden" name="oauth_token" value="{{H(token)}}">
                        <div class="buttons">
                          <button type="submit" name="decision" value="approve">Approve</button>
@@ -394,7 +406,8 @@ public static class ToyOAuth1AspNetExtensions
         return Results.Json(new { key }, contentType: "text/json");
     }
 
-    private static IResult ApproveConsumerKeyPage(HttpRequest req, OAuthStore store)
+    private static IResult ApproveConsumerKeyPage(HttpRequest req, HttpContext httpContext,
+        OAuthStore store, IAntiforgery antiforgery)
     {
         var key = req.Query["oauth_consumer_key"].ToString();
         if (string.IsNullOrWhiteSpace(key))
@@ -410,6 +423,7 @@ public static class ToyOAuth1AspNetExtensions
                 return Results.BadRequest("unknown oauth_consumer_key");
             }
 
+            var tokens = antiforgery.GetAndStoreTokens(httpContext);
             return Results.Content($$"""
                                     <!doctype html>
                                     <html lang="en">
@@ -434,6 +448,7 @@ public static class ToyOAuth1AspNetExtensions
                                         <p><b>Consumer key:</b> <code>{{H(client.Key)}}</code></p>
                                         <p><b>Status:</b> {{(client.Approved ? "already approved" : "pending")}}</p>
                                         <form method="post">
+                                          <input type="hidden" name="{{H(tokens.FormFieldName)}}" value="{{H(tokens.RequestToken!)}}">
                                           <input type="hidden" name="oauth_consumer_key" value="{{H(client.Key)}}">
                                           <div class="buttons">
                                             <button class="approve" name="decision" value="approve">Approve</button>
@@ -447,9 +462,14 @@ public static class ToyOAuth1AspNetExtensions
         }
     }
 
-    private static async Task<IResult> ApproveConsumerKeyDecisionAsync(HttpRequest req,
-        OAuthStore store)
+    private static async Task<IResult> ApproveConsumerKeyDecisionAsync(HttpRequest req, HttpContext httpContext,
+        OAuthStore store, IAntiforgery antiforgery)
     {
+        if (!await antiforgery.IsRequestValidAsync(httpContext).ConfigureAwait(false))
+        {
+            return Results.BadRequest("CSRF validation failed");
+        }
+
         var form = await req.ReadFormAsync();
         var key = form["oauth_consumer_key"].ToString();
         var decision = form["decision"].ToString();

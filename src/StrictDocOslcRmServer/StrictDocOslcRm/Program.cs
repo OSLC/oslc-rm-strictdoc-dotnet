@@ -39,6 +39,9 @@ builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
 // Register OSLC Query evaluation service (oslc.where/select/orderBy/searchTerms/paging)
 builder.Services.AddSingleton<IOslcQueryService, OslcQueryService>();
 
+// Add Anti-Forgery service for CSRF protection on HTML form endpoints
+builder.Services.AddAntiforgery();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();

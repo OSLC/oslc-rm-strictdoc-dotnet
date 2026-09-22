@@ -1,6 +1,6 @@
 services:
   strictdoc-oslc-rm:
-    image: strictdoc-oslc-rm:dev
+    image: localhost/strictdoc-oslc-rm:dev
     build:
       context: src/StrictDocOslcRmServer/
       dockerfile: StrictDocOslcRm/Dockerfile

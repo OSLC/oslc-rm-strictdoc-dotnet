@@ -1,0 +1,30 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DotnetRuntimeVersion>11.0.0-rc.1.26425.128</DotnetRuntimeVersion>
+    <Oslc4NetVersion>0.7.0-preview.8</Oslc4NetVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="System.Text.Json" Version="$(DotnetRuntimeVersion)" />
+    <PackageVersion Include="OSLC4Net.Core" Version="$(Oslc4NetVersion)" />
+    <PackageVersion Include="OSLC4Net.Core.DotNetRdfProvider" Version="$(Oslc4NetVersion)" />
+    <PackageVersion Include="OSLC4Net.Core.Query" Version="$(Oslc4NetVersion)" />
+    <PackageVersion Include="OSLC4Net.Server.Providers" Version="$(Oslc4NetVersion)" />
+    <PackageVersion Include="OSLC4Net.ChangeManagementCommon" Version="$(Oslc4NetVersion)" />
+    <PackageVersion Include="OSLC4Net.Domains.RequirementsManagement" Version="$(Oslc4NetVersion)" />
+
+    <!-- Test -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.57.0" />
+    <PackageVersion Include="TUnit" Version="1.68.17" />
+    <PackageVersion Include="Verify.TUnit" Version="31.27.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.3.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.4.1" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
+
+  </ItemGroup>
+</Project>

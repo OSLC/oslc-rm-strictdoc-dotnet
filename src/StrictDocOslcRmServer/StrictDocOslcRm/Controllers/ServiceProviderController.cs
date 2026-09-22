@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using OSLC4Net.Core.Model;
 using OSLC4Net.Domains.RequirementsManagement;
@@ -16,7 +15,8 @@ namespace StrictDocOslcRm.Controllers;
 public class ServiceProviderController(
     ILogger<ServiceProviderController> logger,
     IBaseUrlService baseUrlService,
-    IStrictDocService strictDocService) : Controller
+    IStrictDocService strictDocService,
+    IOslcQueryService oslcQueryService) : Controller
 {
     [HttpGet]
     [Route("{documentMid}")]
@@ -30,24 +30,27 @@ public class ServiceProviderController(
             return NotFound($"Document with MID '{documentMid}' not found.");
         }
 
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
+        var serviceProviderUri =
+            new Uri($"{baseUrl}/oslc/service_provider/{Uri.EscapeDataString(documentMid)}");
         var serviceProvider = new OSLC4Net.Core.Model.ServiceProvider();
-        serviceProvider.SetAbout(new Uri(Request.GetEncodedUrl()));
+        serviceProvider.SetAbout(serviceProviderUri);
+        serviceProvider.SetDetails([serviceProviderUri]);
         serviceProvider.SetIdentifier(document.Mid);
         serviceProvider.SetTitle(document.Title);
         serviceProvider.SetDescription(
             $"OSLC Requirements Management service for StrictDoc document: {document.Title}");
 
         var svc = new OSLC4Net.Core.Model.Service();
-        svc.SetDomain(new Uri("http://open-services.net/ns/rm#"));
+        svc.SetDomain(new Uri(RM.NS));
 
         var queryCap = new QueryCapability();
         queryCap.SetTitle("StrictDoc Requirements Query Capability");
         queryCap.SetLabel("StrictDoc Requirements Query Capability");
-        queryCap.SetResourceTypes([new Uri("http://open-services.net/ns/rm#Requirement")]);
+        queryCap.SetResourceTypes([new Uri(RM.Requirement)]);
         queryCap.SetResourceShape(
-            new Uri("http://open-services.net/ns/rm/shapes/3.0#RequirementShape"));
+            new Uri($"{baseUrl}/oslc/shapes/requirement"));
 
-        var baseUrl = baseUrlService.GetBaseUrl();
         queryCap.SetQueryBase(
             new Uri($"{baseUrl}/oslc/service_provider/{documentMid}/requirements"));
 
@@ -59,9 +62,9 @@ public class ServiceProviderController(
         selectionDialog.SetLabel("Select Requirement");
         selectionDialog.SetDialog(
             new Uri($"{baseUrl}/oslc/service_provider/{documentMid}/requirements/selector"));
-        selectionDialog.SetHintWidth("500px");
+        selectionDialog.SetHintWidth("650px");
         selectionDialog.SetHintHeight("500px");
-        selectionDialog.SetResourceTypes([new Uri("http://open-services.net/ns/rm#Requirement")]);
+        selectionDialog.SetResourceTypes([new Uri(RM.Requirement)]);
         svc.SetSelectionDialogs([selectionDialog]);
 
         serviceProvider.SetServices([svc]);
@@ -69,18 +72,25 @@ public class ServiceProviderController(
         return serviceProvider;
     }
 
+    /// <summary>
+    /// OSLC Query capability for a document's requirements.
+    /// Supports oslc.prefix, oslc.where, oslc.select, oslc.orderBy, oslc.searchTerms and
+    /// oslc.pageSize, returning an oslc:ResponseInfo container with oslc:totalCount and
+    /// rdfs:member links.
+    /// </summary>
     [HttpGet]
     [Route("{documentMid}/requirements")]
-    public async Task<ActionResult<IEnumerable<Requirement>>> GetRequirements(string documentMid)
+    public async Task<IActionResult> GetRequirements(string documentMid)
     {
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
+
+        var documents = await strictDocService.GetDocumentsAsync();
+        if (documents.All(d => !string.Equals(d.Mid, documentMid, StringComparison.Ordinal)))
+        {
+            return NotFound($"Document with MID '{documentMid}' not found.");
+        }
 
         var requirements = await strictDocService.GetRequirementsForDocumentAsync(documentMid, baseUrl);
-
-        if (!requirements.Any())
-        {
-            return NotFound($"No requirements found for document '{documentMid}'.");
-        }
 
         // Set the About URI for each requirement using new format
         foreach (var requirement in requirements)
@@ -88,10 +98,64 @@ public class ServiceProviderController(
             if (!string.IsNullOrEmpty(requirement.Identifier))
             {
                 requirement.SetAbout(new Uri($"{baseUrl}/?a={requirement.Identifier}"));
+                requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
             }
         }
 
-        return Ok(requirements);
+        var queryBase = $"{baseUrl}/oslc/service_provider/{documentMid}/requirements";
+        var pageSize = ParseIntParameter(Request.Query["oslc.pageSize"]);
+        var page = ParseIntParameter(Request.Query["page"]) ?? 1;
+
+        OslcQueryOutcome outcome;
+        try
+        {
+            outcome = oslcQueryService.Apply(
+                requirements,
+                Request.Query["oslc.prefix"],
+                Request.Query["oslc.where"],
+                Request.Query["oslc.select"],
+                Request.Query["oslc.orderBy"],
+                Request.Query["oslc.searchTerms"],
+                pageSize,
+                page,
+                nextPage => BuildPageUri(queryBase, Request.Query, nextPage));
+        }
+        catch (OslcQueryBadRequestException exception)
+        {
+            logger.LogInformation("Rejected OSLC query for {DocumentMid}: {Message}", documentMid, exception.Message);
+            return BadRequest(exception.Message);
+        }
+        catch (OslcQueryNotImplementedException exception)
+        {
+            logger.LogInformation("Unsupported OSLC query for {DocumentMid}: {Message}", documentMid, exception.Message);
+            return StatusCode(501, exception.Message);
+        }
+
+        // OslcRdfOutputFormatter serializes the oslc:ResponseInfo container (totalCount,
+        // rdfs:member, nextPage) and derives the container/responseInfo subject URIs from the
+        // request. The next-page URI is supplied here so the filter and projection are preserved.
+        var nextPage = outcome.NextPage is null ? null : new Uri(outcome.NextPage);
+        var responseInfo = new ResponseInfoArray<Requirement>(
+            outcome.Members.ToArray(),
+            outcome.SelectedProperties,
+            outcome.TotalCount,
+            nextPage!);
+
+        return Ok(responseInfo);
+    }
+
+    private static int? ParseIntParameter(string? value) =>
+        int.TryParse(value, out var parsed) && parsed > 0 ? parsed : null;
+
+    // Repeat the current query parameters on the next page so the filter, projection and ordering
+    // are preserved, overriding only the page marker.
+    private static string BuildPageUri(string queryBase, IQueryCollection query, int page)
+    {
+        var pairs = query
+            .Where(pair => !string.Equals(pair.Key, "page", StringComparison.OrdinalIgnoreCase))
+            .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value.ToString())}")
+            .Append($"page={page}");
+        return $"{queryBase}?{string.Join('&', pairs)}";
     }
 
     [HttpGet]
@@ -107,8 +171,9 @@ public class ServiceProviderController(
         }
 
         // Set the About URI using new format
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         requirement.SetAbout(new Uri($"{baseUrl}/?a={requirementUid}"));
+        requirement.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
 
         return Ok(requirement);
     }
@@ -123,7 +188,7 @@ public class ServiceProviderController(
     public async Task<IActionResult> RequirementSelector(string documentMid,
         [FromQuery] string? terms = null)
     {
-        var baseUrl = baseUrlService.GetBaseUrl();
+        var baseUrl = baseUrlService.GetBaseUrl().TrimEnd('/');
         var selectorUri = $"{baseUrl}/oslc/service_provider/{documentMid}/requirements/selector";
 
         // Load all requirements (reuse same sourcing logic as GetRequirements)
@@ -134,6 +199,7 @@ public class ServiceProviderController(
             if (!string.IsNullOrEmpty(r.Identifier))
             {
                 r.SetAbout(new Uri($"{baseUrl}/?a={r.Identifier}"));
+                r.InstanceShape = new Uri($"{baseUrl}/oslc/shapes/requirement");
             }
         }
 

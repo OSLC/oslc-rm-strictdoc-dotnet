@@ -8,7 +8,7 @@ using StrictDocOslcRm.Services;
 
 namespace StrictDocOslcRm.Tests;
 
-public class RequirementControllerTests
+public class RequirementControllerTests : IAsyncDisposable
 {
     private readonly RequirementController _controller;
     private readonly IStrictDocService _strictDocService;
@@ -26,6 +26,19 @@ public class RequirementControllerTests
         {
             HttpContext = new DefaultHttpContext()
         };
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        try
+        {
+            _controller.Dispose();
+        }
+        catch
+        {
+            // Ignore any exceptions during disposal
+        }
+        return ValueTask.CompletedTask;
     }
 
     [Test]
@@ -49,6 +62,11 @@ public class RequirementControllerTests
 
         // Assert
         var okResult = result as OkObjectResult;
+        var returnedRequirement = okResult?.Value as Requirement;
+        await Assert.That(returnedRequirement?.InstanceShape)
+            .IsEqualTo(new Uri($"{baseUrl}/oslc/shapes/requirement"));
+        await Assert.That(_controller.Response.Headers.Link.ToString())
+            .Contains($"<{baseUrl}/oslc/shapes/requirement>; rel=\"http://open-services.net/ns/core#instanceShape\"");
         await Verify(okResult?.Value).ConfigureAwait(false);
     }
 }

@@ -42,24 +42,36 @@ public class SecurityHeadersTests(WebApplicationFactory<Program> factory)
     [Test]
     public async Task HstsHeader_IsPresent_InProduction()
     {
-        var client = _factory
-            .WithWebHostBuilder(builder =>
+        var storePath = Path.Combine(Path.GetTempPath(), $"security-headers-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await using var productionFactory = _factory.WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Production");
-            })
-            .CreateClient(new WebApplicationFactoryClientOptions
+                builder.UseSetting("OAuth1:StorePath", storePath);
+            });
+            using var client = productionFactory.CreateClient(new WebApplicationFactoryClientOptions
             {
-                BaseAddress = new Uri("https://localhost")
+                BaseAddress = new Uri("https://hsts-test.example")
             });
 
-        var response = await client.GetAsync("/?a=123");
-        var headers = response.Headers;
+            var response = await client.GetAsync("/?a=123");
+            var headers = response.Headers;
 
-        // Verify Strict-Transport-Security
-        await Assert.That(headers.Contains("Strict-Transport-Security")).IsTrue();
-        var hsts = headers.GetValues("Strict-Transport-Security").FirstOrDefault();
-        await Assert.That(hsts).IsNotNull();
-        await Assert.That(hsts).Contains("max-age=");
+            // Verify Strict-Transport-Security
+            await Assert.That(headers.Contains("Strict-Transport-Security")).IsTrue();
+            var hsts = headers.GetValues("Strict-Transport-Security").FirstOrDefault();
+            await Assert.That(hsts).IsNotNull();
+            await Assert.That(hsts).Contains("max-age=");
+        }
+        finally
+        {
+            if (File.Exists(storePath))
+            {
+                File.Delete(storePath);
+            }
+        }
     }
 
     [Test]

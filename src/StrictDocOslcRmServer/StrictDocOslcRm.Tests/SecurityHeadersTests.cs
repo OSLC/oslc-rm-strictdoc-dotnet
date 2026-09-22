@@ -1,6 +1,4 @@
-using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Playwright;
 
 namespace StrictDocOslcRm.Tests;
 

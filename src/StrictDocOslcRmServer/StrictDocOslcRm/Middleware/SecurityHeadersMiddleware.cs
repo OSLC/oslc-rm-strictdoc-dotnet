@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace StrictDocOslcRm.Middleware;
 
@@ -41,12 +40,18 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
 
     private static bool IsEmbeddable(PathString path)
     {
-        if (!path.HasValue) return false;
+        if (!path.HasValue)
+        {
+            return false;
+        }
 
         var pathValue = path.Value!;
 
         // RequirementController.GetRequirementResource -> /
-        if (pathValue == "/") return true;
+        if (pathValue == "/")
+        {
+            return true;
+        }
 
         // ServiceProviderController.RequirementSelector -> /oslc/service_provider/{documentMid}/requirements/selector
         if (pathValue.StartsWith("/oslc/service_provider", StringComparison.OrdinalIgnoreCase) &&

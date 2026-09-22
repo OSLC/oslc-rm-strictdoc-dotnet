@@ -33,7 +33,7 @@ jobs:
         working-directory: main/src/StrictDocOslcRmServer/
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           disable-sudo: true
           egress-policy: audit
@@ -46,7 +46,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.x
+          dotnet-version: 11.x
       - name: Restore dependencies
         run: dotnet restore
       - name: Verify formatting
@@ -71,7 +71,7 @@ jobs:
           [
             # { setup: "8.x", target: "net8.0" },
             # { setup: "9.x", target: "net9.0" },
-            { setup: "10.x", target: "net10.0" },
+            { setup: "11.x", target: "net11.0" },
           ]
     runs-on: ${{ matrix.os }}
     defaults:
@@ -82,7 +82,7 @@ jobs:
       # TAG_VALUE: ${{ github.ref_name || inputs.version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           disable-sudo: true
           egress-policy: audit

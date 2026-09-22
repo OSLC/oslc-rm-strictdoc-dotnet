@@ -16,7 +16,11 @@
     <PackageVersion Include="OSLC4Net.ChangeManagementCommon" Version="$(Oslc4NetVersion)" />
     <PackageVersion Include="OSLC4Net.Domains.RequirementsManagement" Version="$(Oslc4NetVersion)" />
 
+    <!-- Build/misc -->
+    <PackageVersion Include="Microsoft.Web.LibraryManager.Build" Version="2.1.175" />
+
     <!-- Test -->
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.3" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.3" />
     <PackageVersion Include="TUnit" Version="1.68.17" />
     <PackageVersion Include="Verify.TUnit" Version="31.27.0" />

@@ -93,7 +93,7 @@ public class RequirementControllerTests : IAsyncDisposable
             Title = xssPayloadTitle,
             Description = xssPayloadDesc
         };
-        _strictDocService.GetAllRequirementsAsync(baseUrl).Returns(new List<Requirement> { requirement });
+        _strictDocService.GetRequirementByUidAsync(uid).Returns(requirement);
 
         // Act
         var result = await _controller.GetRequirementResource(uid, null, previewType).ConfigureAwait(false);

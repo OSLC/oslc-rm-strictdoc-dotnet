@@ -97,14 +97,14 @@
             <div class="requirement-id">@Model.Requirement.Identifier</div>
             @if (!string.IsNullOrWhiteSpace(Model.Requirement.Title))
             {
-                <div class="requirement-title">@Html.Raw(Model.Requirement.Title)</div>
+                <div class="requirement-title">@Model.SanitizedTitle</div>
             }
         </div>
 
         @if (!string.IsNullOrWhiteSpace(Model.Requirement.Description))
         {
             <div class="requirement-statement">
-                @Html.Raw(Model.Requirement.Description)
+                @Model.SanitizedDescription
             </div>
         }
 

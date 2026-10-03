@@ -65,12 +65,12 @@
             <div class="requirement-id">@Model.Requirement.Identifier</div>
             @if (!string.IsNullOrWhiteSpace(Model.Requirement.Title))
             {
-                <div class="requirement-title">@Html.Raw(Model.Requirement.Title)</div>
+            <div class="requirement-title">@Model.SanitizedTitle</div>
             }
         </div>
         @if (!string.IsNullOrWhiteSpace(Model.Requirement.Description))
         {
-            <div class="requirement-statement">@Html.Raw(Model.Requirement.Description)</div>
+            <div class="requirement-statement">@Model.SanitizedDescription</div>
         }
         <div class="preview-link">
             <a href="@Model.RequirementUri" target="_blank">View full requirement →</a>

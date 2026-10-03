@@ -32,6 +32,7 @@ builder.Services.AddMemoryCache();
 
 // Register base URL service for URI generation (supports reverse proxy scenarios)
 builder.Services.AddScoped<IBaseUrlService, BaseUrlService>();
+builder.Services.AddSingleton<IRequirementMarkupSanitizer, RequirementMarkupSanitizer>();
 
 // Register StrictDoc service
 builder.Services.AddSingleton<IStrictDocService, StrictDocService>();
